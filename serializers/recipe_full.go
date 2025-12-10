@@ -69,7 +69,7 @@ type RecipeSerializer struct {
 	ShowIngredientOverview bool             `json:"show_ingredient_overview"`
 	Nutrition             interface{}       `json:"nutrition"` // TODO: implement NutritionInformation
 	Properties            []PropertySerializer `json:"properties"`
-	FoodProperties        interface{}       `json:"food_properties"` // TODO: implement food properties calculation
+	FoodProperties        *map[string]interface{} `json:"food_properties"` // TODO: implement food properties calculation
 	Servings              int               `json:"servings"`
 	FilePath              string            `json:"file_path"`
 	ServingsText          string            `json:"servings_text"`
@@ -112,7 +112,7 @@ func SerializeRecipe(recipe *models.Recipe) RecipeSerializer {
 		ShowIngredientOverview: true, // TODO: implement this field
 		Nutrition:             nil, // TODO: implement nutrition
 		Properties:            properties,
-		FoodProperties:        nil, // TODO: implement food properties
+		FoodProperties:        &map[string]interface{}{}, // TODO: implement food properties calculation
 		Servings:              recipe.Servings,
 		FilePath:              "", // TODO: implement file path
 		ServingsText:          recipe.ServingsText,
