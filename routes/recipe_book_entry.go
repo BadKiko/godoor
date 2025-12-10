@@ -33,7 +33,28 @@ func GetRecipeBookEntries(c *gin.Context) {
 	// Handle book filter
 	bookIDStr := c.Query("book")
 	var bookEntries []models.RecipeBookEntry
-	query := models.DB.Joins("Book").Where("recipe_books.space_id = ?", space.ID)
+
+	// First get book IDs for this space
+	var bookIDs []uint
+	if err := models.DB.Model(&models.RecipeBook{}).Where("space_id = ?", space.ID).Pluck("id", &bookIDs).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch books"})
+		return
+	}
+
+	if len(bookIDs) == 0 {
+		// No books in this space, return empty result
+		response := RecipeBookEntryListResponse{
+			Count:     0,
+			Next:      nil,
+			Previous:  nil,
+			Results:   []RecipeBookEntrySerializer{},
+			Timestamp: "2025-12-10T14:15:00+03:00",
+		}
+		c.JSON(http.StatusOK, response)
+		return
+	}
+
+	query := models.DB.Where("book_id IN ?", bookIDs)
 
 	if bookIDStr != "" {
 		bookID, err := strconv.Atoi(bookIDStr)
@@ -41,7 +62,19 @@ func GetRecipeBookEntries(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid book ID"})
 			return
 		}
-		query = query.Where("recipe_books.id = ?", uint(bookID))
+		// Verify the book belongs to this space
+		found := false
+		for _, id := range bookIDs {
+			if id == uint(bookID) {
+				found = true
+				break
+			}
+		}
+		if !found {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Book not found"})
+			return
+		}
+		query = query.Where("book_id = ?", uint(bookID))
 	}
 
 	// Handle pagination
