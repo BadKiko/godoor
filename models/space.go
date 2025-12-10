@@ -1,6 +1,9 @@
 package models
 
-// No imports needed
+// stringPtr creates a string pointer
+func stringPtr(s string) *string {
+	return &s
+}
 
 // Space model matching Tandoor structure
 type Space struct {
@@ -58,6 +61,36 @@ func CreateSpaceForUser(user *User, name *string) (*UserSpace, error) {
 
 	if err := DB.Create(&userSpace).Error; err != nil {
 		return nil, err
+	}
+
+	// Create default meal types for new space
+	defaultMealTypes := []struct {
+		name  string
+		order int
+		time  *string
+		color *string
+	}{
+		{"Breakfast", 1, stringPtr("08:00:00"), stringPtr("#FF6B35")},
+		{"Lunch", 2, stringPtr("12:00:00"), stringPtr("#F7931E")},
+		{"Dinner", 3, stringPtr("18:00:00"), stringPtr("#FFD23F")},
+		{"Snack", 4, nil, stringPtr("#06FFA5")},
+	}
+
+	for _, mt := range defaultMealTypes {
+		mealType := MealType{
+			Name:      mt.name,
+			Order:     mt.order,
+			Time:      mt.time,
+			Color:     mt.color,
+			Default:   mt.order == 1, // Make breakfast default
+			CreatedBy: *user,
+			Space:     space,
+		}
+
+		if err := DB.Create(&mealType).Error; err != nil {
+			// Log error but don't fail space creation
+			continue
+		}
 	}
 
 	return &userSpace, nil

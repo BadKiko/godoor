@@ -170,6 +170,7 @@ func SetupRouter() *gin.Engine {
 		protected.PUT("/recipe/:id/", UpdateRecipe)
 		protected.PATCH("/recipe/:id/", UpdateRecipe)
 		protected.DELETE("/recipe/:id/", DeleteRecipe)
+		protected.PUT("/recipe/:id/shopping/", RecipeShopping)
 	}
 
 	return r

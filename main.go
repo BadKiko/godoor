@@ -7,6 +7,11 @@ import (
 	"godoor/routes"
 )
 
+// stringPtr creates a string pointer
+func stringPtr(s string) *string {
+	return &s
+}
+
 func createTestUser() {
 	var count int64
 	models.DB.Model(&models.User{}).Count(&count)
@@ -44,11 +49,12 @@ func createTestUser() {
 	if spaceCount == 0 {
 		log.Println("Creating test space...")
 		var err error
-		space, err = models.CreateSpace(&user, "Default", "")
+		userSpace, err := models.CreateSpaceForUser(&user, nil)
 		if err != nil {
 			log.Printf("Failed to create test space: %v", err)
 			return
 		}
+		space = &userSpace.Space
 		log.Printf("Test space created: %s (ID: %d)", space.Name, space.ID)
 	} else {
 		// Get existing space
@@ -58,6 +64,46 @@ func createTestUser() {
 			return
 		}
 		log.Printf("Using existing space: %s (ID: %d)", space.Name, space.ID)
+	}
+
+	// Check if we need to create default meal types
+	var mealTypeCount int64
+	models.DB.Model(&models.MealType{}).Where("space_id = ?", space.ID).Count(&mealTypeCount)
+	log.Printf("Meal type count for space %d: %d", space.ID, mealTypeCount)
+
+	if mealTypeCount == 0 {
+		log.Println("Creating default meal types...")
+		// Create default meal types
+		defaultMealTypes := []struct {
+			name  string
+			order int
+			time  *string
+			color *string
+			def   bool
+		}{
+			{"Breakfast", 1, stringPtr("08:00:00"), stringPtr("#FF6B35"), true},
+			{"Lunch", 2, stringPtr("12:00:00"), stringPtr("#F7931E"), false},
+			{"Dinner", 3, stringPtr("18:00:00"), stringPtr("#FFD23F"), false},
+			{"Snack", 4, nil, stringPtr("#06FFA5"), false},
+		}
+
+		for _, mt := range defaultMealTypes {
+			mealType := models.MealType{
+				Name:      mt.name,
+				Order:     mt.order,
+				Time:      mt.time,
+				Color:     mt.color,
+				Default:   mt.def,
+				CreatedBy: user,
+				Space:     *space,
+			}
+
+			if err := models.DB.Create(&mealType).Error; err != nil {
+				log.Printf("Failed to create meal type %s: %v", mt.name, err)
+				continue
+			}
+			log.Printf("Created meal type: %s", mt.name)
+		}
 	}
 
 	// Check if we need to create test data

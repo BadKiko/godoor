@@ -119,15 +119,25 @@ func GetMealPlan(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+// MealTypeRequest represents meal type in request
+type MealTypeRequest struct {
+	ID uint `json:"id" binding:"required"`
+}
+
 // CreateMealPlanRequest represents meal plan creation request
+// RecipeRequest represents recipe in request
+type RecipeRequest struct {
+	ID uint `json:"id"`
+}
+
 type CreateMealPlanRequest struct {
-	Title      string  `json:"title,omitempty"`
-	RecipeID   *uint   `json:"recipe,omitempty"`
-	Servings   float64 `json:"servings,omitempty"`
-	MealTypeID uint    `json:"meal_type" binding:"required"`
-	Note       string  `json:"note,omitempty"`
-	FromDate   string  `json:"from_date" binding:"required"`
-	ToDate     string  `json:"to_date,omitempty"`
+	Title    string          `json:"title,omitempty"`
+	Recipe   *RecipeRequest  `json:"recipe,omitempty"`
+	Servings float64         `json:"servings,omitempty"`
+	MealType MealTypeRequest `json:"meal_type" binding:"required"`
+	Note     string          `json:"note,omitempty"`
+	FromDate string          `json:"from_date" binding:"required"`
+	ToDate   string          `json:"to_date,omitempty"`
 }
 
 // CreateMealPlan creates a new meal plan
@@ -143,7 +153,7 @@ func CreateMealPlan(c *gin.Context) {
 
 	// Find meal type
 	var mealType models.MealType
-	if err := models.DB.Where("space_id = ? AND id = ?", space.ID, req.MealTypeID).First(&mealType).Error; err != nil {
+	if err := models.DB.Where("space_id = ? AND id = ?", space.ID, req.MealType.ID).First(&mealType).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid meal type"})
 		return
 	}
@@ -174,7 +184,11 @@ func CreateMealPlan(c *gin.Context) {
 		servings = 1
 	}
 
-	mealPlan, err := models.CreateMealPlan(user, space, &mealType, fromDate, toDate, req.Title, req.Note, req.RecipeID, servings)
+	var recipeID *uint
+	if req.Recipe != nil {
+		recipeID = &req.Recipe.ID
+	}
+	mealPlan, err := models.CreateMealPlan(user, space, &mealType, fromDate, toDate, req.Title, req.Note, recipeID, servings)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create meal plan"})
 		return
@@ -191,13 +205,13 @@ func CreateMealPlan(c *gin.Context) {
 
 // UpdateMealPlanRequest represents meal plan update request
 type UpdateMealPlanRequest struct {
-	Title      *string  `json:"title,omitempty"`
-	RecipeID   *uint    `json:"recipe,omitempty"`
-	Servings   *float64 `json:"servings,omitempty"`
-	MealTypeID *uint    `json:"meal_type,omitempty"`
-	Note       *string  `json:"note,omitempty"`
-	FromDate   *string  `json:"from_date,omitempty"`
-	ToDate     *string  `json:"to_date,omitempty"`
+	Title    *string          `json:"title,omitempty"`
+	Recipe   *RecipeRequest   `json:"recipe,omitempty"`
+	Servings *float64         `json:"servings,omitempty"`
+	MealType *MealTypeRequest `json:"meal_type,omitempty"`
+	Note     *string          `json:"note,omitempty"`
+	FromDate *string          `json:"from_date,omitempty"`
+	ToDate   *string          `json:"to_date,omitempty"`
 }
 
 // UpdateMealPlan updates a meal plan
@@ -233,19 +247,19 @@ func UpdateMealPlan(c *gin.Context) {
 	if req.Title != nil {
 		mealPlan.Title = *req.Title
 	}
-	if req.RecipeID != nil {
-		mealPlan.RecipeID = req.RecipeID
+	if req.Recipe != nil {
+		mealPlan.RecipeID = &req.Recipe.ID
 	}
 	if req.Servings != nil && *req.Servings > 0 {
 		mealPlan.Servings = *req.Servings
 	}
-	if req.MealTypeID != nil {
+	if req.MealType != nil {
 		var mealType models.MealType
-		if err := models.DB.Where("space_id = ? AND id = ?", space.ID, *req.MealTypeID).First(&mealType).Error; err != nil {
+		if err := models.DB.Where("space_id = ? AND id = ?", space.ID, req.MealType.ID).First(&mealType).Error; err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid meal type"})
 			return
 		}
-		mealPlan.MealTypeID = *req.MealTypeID
+		mealPlan.MealTypeID = req.MealType.ID
 	}
 	if req.Note != nil {
 		mealPlan.Note = *req.Note
