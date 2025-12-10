@@ -2,77 +2,88 @@ package main
 
 import (
 	"log"
+	"os"
 	"godoor/config"
 	"godoor/models"
 	"godoor/routes"
+	"github.com/joho/godotenv"
 )
 
-// stringPtr creates a string pointer
-func stringPtr(s string) *string {
-	return &s
-}
+func initializeDatabase() {
+	// Check if we need to create admin user
+	var userCount int64
+	models.DB.Model(&models.User{}).Count(&userCount)
 
-func createTestUser() {
-	var count int64
-	models.DB.Model(&models.User{}).Count(&count)
-	log.Printf("User count: %d", count)
+	if userCount == 0 {
+		// Create admin user from environment variables or defaults
+		adminUsername := os.Getenv("ADMIN_USERNAME")
+		adminPassword := os.Getenv("ADMIN_PASSWORD")
 
-	if count == 0 {
-		log.Println("Creating test user...")
-		user, err := models.CreateUser("admin", "admin123", "Admin", "User")
-		if err != nil {
-			log.Fatal("Failed to create test user:", err)
+		if adminUsername == "" {
+			adminUsername = "admin"
+		}
+		if adminPassword == "" {
+			adminPassword = "admin123"
 		}
 
-		// Create user preferences if they don't exist
+		log.Printf("Creating admin user: %s", adminUsername)
+		user, err := models.CreateUser(adminUsername, adminPassword, "Admin", "User")
+		if err != nil {
+			log.Printf("Failed to create admin user: %v", err)
+			return
+		}
+
+		// Create user preferences
 		_, err = models.GetOrCreateUserPreference(user)
 		if err != nil {
-			log.Fatal("Failed to create user preferences:", err)
+			log.Printf("Failed to create user preferences: %v", err)
 		}
 
-		log.Printf("Test user created: %s (ID: %d)", user.Username, user.ID)
-	}
-
-	// Always try to create test space and data
-	var spaceCount int64
-	models.DB.Model(&models.Space{}).Count(&spaceCount)
-	log.Printf("Space count: %d", spaceCount)
-
-	// Get the user (should exist now)
-	var user models.User
-	if err := models.DB.First(&user).Error; err != nil {
-		log.Printf("Failed to get user: %v", err)
-		return
-	}
-
-	var space *models.Space
-	if spaceCount == 0 {
-		log.Println("Creating test space...")
-		var err error
-		userSpace, err := models.CreateSpaceForUser(&user, nil)
+		// Create default space for admin
+		userSpace, err := models.CreateSpaceForUser(user, nil)
 		if err != nil {
-			log.Printf("Failed to create test space: %v", err)
+			log.Printf("Failed to create default space: %v", err)
 			return
 		}
-		space = &userSpace.Space
-		log.Printf("Test space created: %s (ID: %d)", space.Name, space.ID)
-	} else {
-		// Get existing space
-		space = &models.Space{}
-		if err := models.DB.First(space).Error; err != nil {
-			log.Printf("Failed to get existing space: %v", err)
-			return
-		}
-		log.Printf("Using existing space: %s (ID: %d)", space.Name, space.ID)
-	}
 
+		log.Printf("Admin user and default space created successfully")
+		log.Printf("Login: %s, Password: %s", adminUsername, adminPassword)
+
+		// Create default meal types for the new space
+		createDefaultMealTypes(userSpace.Space)
+	} else {
+		// Check if we need to create default meal types for existing spaces
+		var spaceCount int64
+		models.DB.Model(&models.Space{}).Count(&spaceCount)
+
+		if spaceCount > 0 {
+			// Get first space
+			var space models.Space
+			if err := models.DB.First(&space).Error; err != nil {
+				log.Printf("Failed to get space: %v", err)
+				return
+			}
+
+			createDefaultMealTypes(space)
+		}
+	}
+}
+
+func createDefaultMealTypes(space models.Space) {
 	// Check if we need to create default meal types
 	var mealTypeCount int64
 	models.DB.Model(&models.MealType{}).Where("space_id = ?", space.ID).Count(&mealTypeCount)
-	log.Printf("Meal type count for space %d: %d", space.ID, mealTypeCount)
 
 	if mealTypeCount == 0 {
 		log.Println("Creating default meal types...")
+
+		// Get first user for created_by
+		var user models.User
+		if err := models.DB.First(&user).Error; err != nil {
+			log.Printf("Failed to get user for meal types: %v", err)
+			return
+		}
+
 		// Create default meal types
 		defaultMealTypes := []struct {
 			name  string
@@ -95,7 +106,7 @@ func createTestUser() {
 				Color:     mt.color,
 				Default:   mt.def,
 				CreatedBy: user,
-				Space:     *space,
+				Space:     space,
 			}
 
 			if err := models.DB.Create(&mealType).Error; err != nil {
@@ -105,66 +116,39 @@ func createTestUser() {
 			log.Printf("Created meal type: %s", mt.name)
 		}
 	}
+}
 
-	// Check if we need to create test data
-	var foodCount int64
-	models.DB.Model(&models.Food{}).Where("space_id = ?", space.ID).Count(&foodCount)
-	log.Printf("Food count for space %d: %d", space.ID, foodCount)
-
-	if foodCount == 0 {
-		log.Println("Creating test foods...")
-		// Create test foods
-		foods := []struct {
-			name        string
-			description string
-		}{
-			{"Tomato", "Fresh red tomato"},
-			{"Onion", "Yellow cooking onion"},
-			{"Garlic", "Fresh garlic cloves"},
-			{"Olive Oil", "Extra virgin olive oil"},
-			{"Salt", "Sea salt"},
-			{"Black Pepper", "Ground black pepper"},
-		}
-
-		for _, foodData := range foods {
-			_, err := models.CreateFood(space, foodData.name, foodData.description)
-			if err != nil {
-				log.Printf("Failed to create food %s: %v", foodData.name, err)
-			}
-		}
-		log.Println("Test foods created")
-	}
-
-	// Check if we need to create recipe book
-	var bookCount int64
-	models.DB.Model(&models.RecipeBook{}).Where("space_id = ?", space.ID).Count(&bookCount)
-	log.Printf("RecipeBook count for space %d: %d", space.ID, bookCount)
-
-	if bookCount == 0 {
-		log.Println("Creating test recipe book...")
-		recipeBook, err := models.CreateRecipeBook(&user, space, "My Recipes", "A collection of my favorite recipes")
-		if err != nil {
-			log.Printf("Failed to create recipe book: %v", err)
-		} else {
-			log.Printf("Test recipe book created: %s (ID: %d)", recipeBook.Name, recipeBook.ID)
-		}
-	}
+// stringPtr creates a string pointer
+func stringPtr(s string) *string {
+	return &s
 }
 
 func main() {
+	// Load .env file if exists
+	if err := godotenv.Load(); err != nil {
+		// .env file not found, continue without it
+		log.Println("No .env file found, using default environment variables")
+	}
+
 	// Initialize database
 	config.InitDB()
 
 	// Auto migrate database schema
 	models.AutoMigrate()
 
-	// Create test user and preferences if none exist
-	createTestUser()
+	// Initialize database with default data
+	initializeDatabase()
 
 	// Setup routes
 	r := routes.SetupRouter()
 
+	// Get port from environment or default to 8080
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
 	// Start server
-	log.Println("Server starting on :8080")
-	r.Run(":8080")
+	log.Printf("Server starting on :%s", port)
+	r.Run(":" + port)
 }

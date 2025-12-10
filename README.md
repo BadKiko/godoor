@@ -66,29 +66,50 @@ Simple implementation of Tandoor recipe management system in Go.
 ## Running
 
 ```bash
+# Copy environment file
+cp env.example .env
+
+# Edit .env file if needed
+# nano .env
+
+# Run
 go mod tidy
 go build -o godoor .
 ./godoor
 ```
 
-Server starts on port 8080.
+Server starts on port 8080 (configurable via PORT environment variable).
 
-## Test User
+## Configuration
 
-- **Username:** admin
-- **Password:** admin123
+Create `.env` file in the project root (see `env.example` for reference):
+
+```bash
+# Admin user
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=admin123
+
+# Server port
+PORT=8080
+```
+
+Default admin credentials: `admin` / `admin123`
 
 ## API Compatibility
 
 API is fully compatible with original Tandoor Recipes - all responses have identical structure and fields.
 
-## Next Steps
+## Features Status
 
-- [ ] Recipe models
-- [ ] Recipe API (CRUD)
-- [ ] Meal plan models
-- [ ] Meal plan API
-- [ ] Recipe import/export
+- ✅ Authentication and user management
+- ✅ Spaces and user-space relationships
+- ✅ User preferences
+- ✅ Recipe books and entries
+- ✅ Keywords
+- ✅ Meal types and meal plans
+- ✅ Recipes with steps and ingredients
+- ✅ Basic shopping list support
+- ✅ Server settings
 
 ## Technologies
 
@@ -97,3 +118,4 @@ API is fully compatible with original Tandoor Recipes - all responses have ident
 - **GORM** - ORM for database operations
 - **SQLite** - database
 - **bcrypt** - password hashing
+- **godotenv** - environment variables support
