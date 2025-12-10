@@ -72,9 +72,12 @@ cp env.example .env
 # Edit .env file if needed
 # nano .env
 
+# To start with clean database, remove the database file:
+# rm godoor.db
+
 # Run
 go mod tidy
-go build -o godoor .
+go build -ldflags="-s -w" -o godoor .
 ./godoor
 ```
 

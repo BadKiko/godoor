@@ -14,6 +14,7 @@ import (
 func GetRecipes(c *gin.Context) {
 	space := c.MustGet("space").(*models.Space)
 
+
 	// Parse query parameters
 	sortOrder := c.Query("sort_order")
 	pageSizeStr := c.Query("page_size")
@@ -123,6 +124,7 @@ func CreateRecipe(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request format"})
 		return
 	}
+
 
 	// Debug logging
 	fmt.Printf("DEBUG: Recipe name: %s, Steps count: %d\n", req.Name, len(req.Steps))
