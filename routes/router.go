@@ -142,6 +142,14 @@ func SetupRouter() *gin.Engine {
 		protected.PATCH("/meal-plan/:id/", UpdateMealPlan)
 		protected.DELETE("/meal-plan/:id/", DeleteMealPlan)
 
+		// Step routes
+		protected.GET("/step/", GetSteps)
+		protected.POST("/step/", CreateStep)
+		protected.GET("/step/:id/", GetStep)
+		protected.PUT("/step/:id/", UpdateStep)
+		protected.PATCH("/step/:id/", UpdateStep)
+		protected.DELETE("/step/:id/", DeleteStep)
+
 		// Food routes
 		protected.GET("/food/", GetFoods)
 		protected.POST("/food/", CreateFood)

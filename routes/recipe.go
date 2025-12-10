@@ -138,9 +138,21 @@ func CreateRecipe(c *gin.Context) {
 
 // UpdateRecipeRequest represents recipe update request
 type UpdateRecipeRequest struct {
-	Name        *string `json:"name,omitempty"`
-	Description *string `json:"description,omitempty"`
-	Servings    *int    `json:"servings,omitempty"`
+	Name        *string                   `json:"name,omitempty"`
+	Description *string                   `json:"description,omitempty"`
+	Servings    *int                      `json:"servings,omitempty"`
+	Steps       []map[string]interface{}  `json:"steps,omitempty"`       // TODO: implement proper step handling
+	Properties  []map[string]interface{}  `json:"properties,omitempty"`  // TODO: implement proper property handling
+}
+
+// StepUpdate represents a step in update request
+type StepUpdate struct {
+	Name        string                   `json:"name"`
+	Instruction string                   `json:"instruction"`
+	Time        int                      `json:"time"`
+	Ingredients []map[string]interface{} `json:"ingredients"`
+	StepRecipe  *int                     `json:"step_recipe"`
+	Order       int                      `json:"order"`
 }
 
 // UpdateRecipe updates a recipe
@@ -188,13 +200,103 @@ func UpdateRecipe(c *gin.Context) {
 		return
 	}
 
+	// Handle steps - delete existing and create new ones
+	var responseSteps []map[string]interface{}
+	if req.Steps != nil && len(req.Steps) > 0 {
+		// Delete existing steps for this recipe
+		models.DB.Where("recipe_id = ?", recipe.ID).Delete(&models.Step{})
+
+		// Create new steps
+		responseSteps = make([]map[string]interface{}, len(req.Steps))
+		for i, stepData := range req.Steps {
+			step := models.Step{
+				Name:        getStringFromMap(stepData, "name"),
+				Instruction: getStringFromMap(stepData, "instruction"),
+				Time:        getIntFromMap(stepData, "time"),
+				Order:       getIntFromMap(stepData, "order"),
+				SpaceID:     space.ID,
+				Space:       *space,
+				RecipeID:    recipe.ID,
+				Recipe:      recipe,
+			}
+
+			if err := models.DB.Create(&step).Error; err != nil {
+				continue
+			}
+
+			// Create response step data with real ID
+			responseSteps[i] = map[string]interface{}{
+				"id":                   step.ID,
+				"name":                 step.Name,
+				"instruction":          step.Instruction,
+				"time":                 step.Time,
+				"order":                step.Order,
+				"show_as_header":       step.ShowAsHeader,
+				"show_ingredients_table": step.ShowIngredientsTable,
+				"ingredients":          []interface{}{}, // TODO: implement ingredients
+				"instructions_markdown": step.Instruction, // TODO: implement markdown
+				"file":                 nil,
+				"step_recipe":          nil,
+				"step_recipe_data":     nil,
+				"numrecipe":           0,
+			}
+		}
+	}
+
 	if err := models.DB.Preload("CreatedBy").First(&recipe, recipe.ID).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to reload recipe"})
 		return
 	}
 
-	response := serializers.SerializeRecipe(&recipe)
+	// Create response manually with proper steps
+	response := map[string]interface{}{
+		"id":                    recipe.ID,
+		"name":                  recipe.Name,
+		"description":           recipe.Description,
+		"image":                 nil,
+		"keywords":              []interface{}{},
+		"steps":                 responseSteps,
+		"working_time":          recipe.WorkingTime,
+		"waiting_time":          recipe.WaitingTime,
+		"created_by":            serializers.SerializeUser(&recipe.CreatedBy),
+		"created_at":            recipe.CreatedAt,
+		"updated_at":            recipe.UpdatedAt,
+		"source_url":            "",
+		"internal":              recipe.Internal,
+		"show_ingredient_overview": true,
+		"nutrition":             nil,
+		"properties":            []interface{}{},
+		"food_properties":       map[string]interface{}{},
+		"servings":              recipe.Servings,
+		"file_path":             "",
+		"servings_text":         recipe.ServingsText,
+		"rating":                recipe.Rating,
+		"last_cooked":           nil,
+		"private":               recipe.Private,
+		"shared":                []interface{}{},
+	}
+
 	c.JSON(http.StatusOK, response)
+	c.JSON(http.StatusOK, response)
+}
+
+// Helper functions to extract values from map
+func getStringFromMap(data map[string]interface{}, key string) string {
+	if val, ok := data[key]; ok {
+		if str, ok := val.(string); ok {
+			return str
+		}
+	}
+	return ""
+}
+
+func getIntFromMap(data map[string]interface{}, key string) int {
+	if val, ok := data[key]; ok {
+		if num, ok := val.(float64); ok {
+			return int(num)
+		}
+	}
+	return 0
 }
 
 // DeleteRecipe deletes a recipe

@@ -5,18 +5,21 @@ import (
 	"time"
 )
 
-// IngredientSerializer placeholder (simplified)
+// IngredientSerializer matching Tandoor IngredientSerializer
 type IngredientSerializer struct {
-	ID          uint        `json:"id"`
-	Amount      float64     `json:"amount"`
-	Unit        interface{} `json:"unit"` // TODO: implement Unit
-	Food        interface{} `json:"food"` // TODO: implement Food
-	Note        string      `json:"note"`
-	IsHeader    bool        `json:"is_header"`
-	NoAmount    bool        `json:"no_amount"`
-	Order       int         `json:"order"`
-	CreatedAt   time.Time   `json:"created_at"`
-	UpdatedAt   time.Time   `json:"updated_at"`
+	ID                     uint                   `json:"id"`
+	Food                   interface{}            `json:"food"` // FoodSerializer, TODO: implement
+	Unit                   interface{}            `json:"unit"` // UnitSerializer, TODO: implement
+	Amount                 float64                `json:"amount"`
+	Conversions            []interface{}          `json:"conversions"` // TODO: implement conversions
+	Note                   string                 `json:"note"`
+	Order                  int                    `json:"order"`
+	IsHeader               bool                   `json:"is_header"`
+	NoAmount               bool                   `json:"no_amount"`
+	OriginalText           string                 `json:"original_text"`
+	UsedInRecipes          []interface{}          `json:"used_in_recipes"` // TODO: implement
+	AlwaysUsePluralUnit    bool                   `json:"always_use_plural_unit"`
+	AlwaysUsePluralFood    bool                   `json:"always_use_plural_food"`
 }
 
 // StepSerializer matching Tandoor StepSerializer
@@ -89,7 +92,7 @@ func SerializeRecipe(recipe *models.Recipe) RecipeSerializer {
 	// TODO: implement proper keywords loading
 	keywords := []KeywordLabelSerializer{}
 
-	// TODO: implement steps serialization
+	// TODO: implement steps serialization - for now return empty array
 	steps := []StepSerializer{}
 
 	// TODO: implement properties serialization
@@ -121,4 +124,99 @@ func SerializeRecipe(recipe *models.Recipe) RecipeSerializer {
 		Private:               recipe.Private,
 		Shared:                []interface{}{}, // TODO: implement shared users
 	}
+}
+
+// SerializeRecipeWithSteps creates a recipe serializer with provided steps (for update responses)
+func SerializeRecipeWithSteps(recipe *models.Recipe, requestSteps []map[string]interface{}) RecipeSerializer {
+	base := SerializeRecipe(recipe)
+
+	// Convert request steps to StepSerializer format (basic conversion)
+	steps := make([]StepSerializer, len(requestSteps))
+	for i, stepData := range requestSteps {
+		step := StepSerializer{
+			Name:                 getStringFromMap(stepData, "name"),
+			Instruction:          getStringFromMap(stepData, "instruction"),
+			Time:                 getIntFromMap(stepData, "time"),
+			Order:                getIntFromMap(stepData, "order"),
+			ShowAsHeader:         true, // default
+			ShowIngredientsTable: true, // default
+		}
+
+		// Handle ingredients array - always initialize as empty slice if field exists
+		if _, exists := stepData["ingredients"]; exists {
+			if ingredientsData, ok := stepData["ingredients"]; ok {
+				if ingredientsSlice, ok := ingredientsData.([]interface{}); ok {
+					ingredients := make([]IngredientSerializer, len(ingredientsSlice))
+					for j, ingData := range ingredientsSlice {
+						if ingMap, ok := ingData.(map[string]interface{}); ok {
+							ingredients[j] = IngredientSerializer{
+								Amount: getFloatFromMap(ingMap, "amount"),
+								Note:   getStringFromMap(ingMap, "note"),
+								Order:  getIntFromMap(ingMap, "order"),
+								IsHeader: getBoolFromMap(ingMap, "is_header"),
+								NoAmount: getBoolFromMap(ingMap, "no_amount"),
+								OriginalText: getStringFromMap(ingMap, "original_text"),
+								// TODO: implement Food, Unit, Conversions, UsedInRecipes
+								Food: nil,
+								Unit: nil,
+								Conversions: []interface{}{},
+								UsedInRecipes: []interface{}{},
+								AlwaysUsePluralUnit: false,
+								AlwaysUsePluralFood: false,
+							}
+						}
+					}
+					step.Ingredients = ingredients
+				} else {
+					// If ingredients field exists but is not an array, initialize as empty array
+					step.Ingredients = []IngredientSerializer{}
+				}
+			} else {
+				// If ingredients field exists, initialize as empty array
+				step.Ingredients = []IngredientSerializer{}
+			}
+		}
+
+		steps[i] = step
+	}
+
+	base.Steps = steps
+	return base
+}
+
+// Helper functions to extract values from map
+func getStringFromMap(data map[string]interface{}, key string) string {
+	if val, ok := data[key]; ok {
+		if str, ok := val.(string); ok {
+			return str
+		}
+	}
+	return ""
+}
+
+func getIntFromMap(data map[string]interface{}, key string) int {
+	if val, ok := data[key]; ok {
+		if num, ok := val.(float64); ok {
+			return int(num)
+		}
+	}
+	return 0
+}
+
+func getFloatFromMap(data map[string]interface{}, key string) float64 {
+	if val, ok := data[key]; ok {
+		if num, ok := val.(float64); ok {
+			return num
+		}
+	}
+	return 0.0
+}
+
+func getBoolFromMap(data map[string]interface{}, key string) bool {
+	if val, ok := data[key]; ok {
+		if b, ok := val.(bool); ok {
+			return b
+		}
+	}
+	return false
 }

@@ -15,6 +15,10 @@ type Step struct {
 	SpaceID uint `json:"-" gorm:"not null"`
 	Space   Space `json:"-" gorm:"foreignKey:SpaceID;references:ID"`
 
+	// For permission checking - the primary recipe this step belongs to
+	RecipeID uint `json:"-" gorm:"not null"`
+	Recipe   Recipe `json:"recipe" gorm:"foreignKey:RecipeID;references:ID"`
+
 	// Many-to-many with recipes (for step recipes)
 	Recipes []Recipe `json:"-" gorm:"many2many:recipe_steps;"`
 

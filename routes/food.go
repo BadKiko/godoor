@@ -17,7 +17,8 @@ func GetFoods(c *gin.Context) {
 
 	// Handle search query
 	if searchQuery := c.Query("query"); searchQuery != "" {
-		query = query.Where("name ILIKE ?", "%"+searchQuery+"%")
+		// SQLite compatible case-insensitive search
+		query = query.Where("LOWER(name) LIKE LOWER(?)", "%"+searchQuery+"%")
 	}
 
 	var totalCount int64
