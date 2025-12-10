@@ -22,6 +22,9 @@ func AutoMigrate() {
 		&UserSpace{},
 		&AccessToken{},
 		&UserPreference{},
+		&Recipe{},
+		&RecipeBook{},
+		&RecipeBookEntry{},
 	)
 	if err != nil {
 		panic("Failed to migrate database: " + err.Error())

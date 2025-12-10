@@ -1,37 +1,44 @@
 # GoDoor - Tandoor Recipes on Go
 
-Простая реализация системы управления рецептами Tandoor на языке Go.
+Simple implementation of Tandoor recipe management system in Go.
 
-**Версия: 2.3.6** (совместима с Tandoor 2.3.6)
+**Version: 2.3.6** (compatible with Tandoor 2.3.6)
 
-## Реализованные возможности
+## Implemented Features
 
-### ✅ Авторизация
-- `POST /api-token-auth/` - аутентификация пользователей (OAuth2 токены)
+### ✅ Authentication
+- `POST /api-token-auth/` - user authentication (OAuth2 tokens)
 - `GET /api-auth/` - DRF authentication endpoints
-- Токен-базированная авторизация с scope'ами
-- Хэширование паролей с bcrypt
+- Token-based authentication with scopes
+- Password hashing with bcrypt
 
-### ✅ Пользователи и Пространства
-- `GET /api/user/` - список пользователей в пространстве
-- `GET /api/user/:id/` - получение пользователя
-- `PATCH /api/user/:id/` - обновление пользователя
-- `GET /api/space/` - список пространств пользователя
-- `POST /api/space/` - создание пространства
-- `GET /api/space/:id/` - получение пространства
-- `PUT/PATCH /api/space/:id/` - обновление пространства
-- `GET /api/space/current/` - текущее активное пространство
-- `GET /api/user-space/` - связи пользователь-пространство
+### ✅ Users and Spaces
+- `GET /api/user/` - list of users in space
+- `GET /api/user/:id/` - get specific user
+- `PATCH /api/user/:id/` - update user
+- `GET /api/space/` - list of user's spaces
+- `POST /api/space/` - create space
+- `GET /api/space/:id/` - get specific space
+- `PUT/PATCH /api/space/:id/` - update space
+- `GET /api/space/current/` - current active space
+- `GET /api/user-space/` - user-space relationships
 
-### ✅ Настройки сервера
-- `GET /api/server-settings/current/` - публичные настройки сервера (без авторизации)
-- `GET /api/` - корневой API endpoint возвращает 403 (идентификация сервера)
+### ✅ Server Settings
+- `GET /api/server-settings/current/` - public server settings (no auth required)
+- `GET /api/` - root API endpoint returns 403 (server identification)
 
-### ✅ Настройки пользователя
-- `GET /api/user-preference/` - получение пользовательских настроек
-- `PATCH /api/user-preference/` - обновление пользовательских настроек
+### ✅ User Preferences
+- `GET /api/user-preference/` - get user preferences
+- `PATCH /api/user-preference/` - update user preferences
 
-## Запуск
+### ✅ Recipe Books
+- `GET /api/recipe-book/` - list of recipe books
+- `POST /api/recipe-book/` - create recipe book
+- `GET /api/recipe-book/:id/` - get specific recipe book
+- `PUT/PATCH /api/recipe-book/:id/` - update recipe book
+- `DELETE /api/recipe-book/:id/` - delete recipe book
+
+## Running
 
 ```bash
 go mod tidy
@@ -39,29 +46,29 @@ go build -o godoor .
 ./godoor
 ```
 
-Сервер запускается на порту 8080.
+Server starts on port 8080.
 
-## Тестовый пользователь
+## Test User
 
-- **Username**: admin
-- **Password**: admin123
+- **Username:** admin
+- **Password:** admin123
 
-## API совместимость
+## API Compatibility
 
-API полностью совместимо с оригинальным Tandoor Recipes - все ответы имеют идентичную структуру и поля.
+API is fully compatible with original Tandoor Recipes - all responses have identical structure and fields.
 
-## Следующие этапы
+## Next Steps
 
-- [ ] Модели рецептов
-- [ ] API для рецептов (CRUD)
-- [ ] Модели планов питания
-- [ ] API для планов питания
-- [ ] Импорт/экспорт рецептов
+- [ ] Recipe models
+- [ ] Recipe API (CRUD)
+- [ ] Meal plan models
+- [ ] Meal plan API
+- [ ] Recipe import/export
 
-## Технологии
+## Technologies
 
-- **Go** - основной язык
-- **Gin** - веб-фреймворк
-- **GORM** - ORM для работы с БД
-- **SQLite** - база данных
-- **bcrypt** - хэширование паролей
+- **Go** - main language
+- **Gin** - web framework
+- **GORM** - ORM for database operations
+- **SQLite** - database
+- **bcrypt** - password hashing

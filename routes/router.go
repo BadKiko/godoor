@@ -71,6 +71,14 @@ func SetupRouter() *gin.Engine {
 		// User preference routes (no scope middleware needed)
 		protectedNoScope.GET("/user-preference/", GetUserPreference)
 		protectedNoScope.PATCH("/user-preference/", UpdateUserPreference)
+
+		// Recipe book routes
+		protected.GET("/recipe-book/", GetRecipeBooks)
+		protected.POST("/recipe-book/", CreateRecipeBook)
+		protected.GET("/recipe-book/:id/", GetRecipeBook)
+		protected.PUT("/recipe-book/:id/", UpdateRecipeBook)
+		protected.PATCH("/recipe-book/:id/", UpdateRecipeBook)
+		protected.DELETE("/recipe-book/:id/", DeleteRecipeBook)
 	}
 
 	return r
