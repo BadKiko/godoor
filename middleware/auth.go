@@ -3,6 +3,7 @@ package middleware
 import (
 	"net/http"
 	"strings"
+	"time"
 	"godoor/models"
 	"github.com/gin-gonic/gin"
 )
@@ -37,7 +38,13 @@ func AuthMiddleware() gin.HandlerFunc {
 		}
 
 		// Check if token is expired
-		// TODO: implement expiration check
+		if accessToken.Expires.Before(time.Now()) {
+			// Clean up expired token
+			models.DB.Delete(&accessToken)
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Token expired", "code": "token_expired"})
+			c.Abort()
+			return
+		}
 
 		// Load user
 		var user models.User

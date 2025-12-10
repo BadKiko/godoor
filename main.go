@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"time"
 	"godoor/config"
 	"godoor/models"
 	"godoor/routes"
@@ -10,6 +11,9 @@ import (
 )
 
 func initializeDatabase() {
+	// Clean up expired tokens
+	cleanupExpiredTokens()
+
 	// Check if we need to create admin user
 	var userCount int64
 	models.DB.Model(&models.User{}).Count(&userCount)
@@ -115,6 +119,16 @@ func createDefaultMealTypes(space models.Space) {
 			}
 			log.Printf("Created meal type: %s", mt.name)
 		}
+	}
+}
+
+// cleanupExpiredTokens removes expired access tokens
+func cleanupExpiredTokens() {
+	result := models.DB.Where("expires < ?", time.Now()).Delete(&models.AccessToken{})
+	if result.Error != nil {
+		log.Printf("Failed to cleanup expired tokens: %v", result.Error)
+	} else if result.RowsAffected > 0 {
+		log.Printf("Cleaned up %d expired tokens", result.RowsAffected)
 	}
 }
 

@@ -11,6 +11,9 @@ import (
 func SetupRouter() *gin.Engine {
 	r := gin.Default()
 
+	// Set maximum multipart memory (32MB for image uploads)
+	r.MaxMultipartMemory = 32 << 20
+
 	// CORS middleware
 	r.Use(func(c *gin.Context) {
 		c.Header("Access-Control-Allow-Origin", "*")
@@ -171,6 +174,7 @@ func SetupRouter() *gin.Engine {
 		protected.PATCH("/recipe/:id/", UpdateRecipe)
 		protected.DELETE("/recipe/:id/", DeleteRecipe)
 		protected.PUT("/recipe/:id/shopping/", RecipeShopping)
+		protected.PUT("/recipe/:id/image/", RecipeImage)
 	}
 
 	return r

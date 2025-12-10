@@ -9,6 +9,7 @@ type Recipe struct {
 	BaseModel
 	Name        string  `json:"name" gorm:"not null"`
 	Description *string `json:"description"`
+	Image       *string `json:"image"`
 	Servings    int     `json:"servings" gorm:"default:1"`
 	ServingsText string `json:"servings_text" gorm:"default:''"`
 	WorkingTime int    `json:"working_time" gorm:"default:0"`

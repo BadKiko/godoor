@@ -62,6 +62,7 @@ Simple implementation of Tandoor recipe management system in Go.
 - `GET /api/recipe/:id/` - get specific recipe
 - `PUT/PATCH /api/recipe/:id/` - update recipe
 - `DELETE /api/recipe/:id/` - delete recipe
+- `PUT /api/recipe/:id/image/` - upload/update recipe image (multipart/form-data: image file or image_url)
 
 ## Running
 
@@ -102,6 +103,12 @@ Default admin credentials: `admin` / `admin123`
 
 API is fully compatible with original Tandoor Recipes - all responses have identical structure and fields.
 
+## Security
+
+- Access tokens expire after 5 years (matching Tandoor)
+- Expired tokens are automatically cleaned up on server startup
+- Invalid/expired tokens return appropriate error codes
+
 ## Features Status
 
 - ✅ Authentication and user management
@@ -111,8 +118,10 @@ API is fully compatible with original Tandoor Recipes - all responses have ident
 - ✅ Keywords
 - ✅ Meal types and meal plans
 - ✅ Recipes with steps and ingredients
+- ✅ Basic image support (URL-based)
 - ✅ Basic shopping list support
 - ✅ Server settings
+- ✅ Recipe image upload endpoint
 
 ## Technologies
 

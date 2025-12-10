@@ -105,7 +105,7 @@ func SerializeRecipe(recipe *models.Recipe) RecipeSerializer {
 		ID:                    recipe.ID,
 		Name:                  recipe.Name,
 		Description:           description,
-		Image:                 nil, // TODO: implement image
+		Image:                 recipe.Image,
 		Keywords:              keywords,
 		Steps:                 steps,
 		WorkingTime:           recipe.WorkingTime,

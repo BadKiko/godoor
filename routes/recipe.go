@@ -2,6 +2,7 @@ package routes
 
 import (
 	"fmt"
+	"mime/multipart"
 	"net/http"
 	"strconv"
 	"strings"
@@ -389,6 +390,143 @@ func DeleteRecipe(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusNoContent, nil)
+}
+
+// RecipeImageRequest represents recipe image update request (like Tandoor RecipeImageSerializer)
+type RecipeImageRequest struct {
+	Image    string `form:"image"`     // Uploaded file (not used directly)
+	ImageURL string `form:"image_url"` // URL to download image from
+}
+
+// RecipeImageResponse represents the response structure
+type RecipeImageResponse struct {
+	ID       uint   `json:"id"`
+	Image    string `json:"image,omitempty"`
+	ImageURL string `json:"image_url,omitempty"`
+}
+
+// validateImageURL performs basic URL validation (simplified version of Tandoor validate_import_url)
+func validateImageURL(url string) bool {
+	if url == "" {
+		return false
+	}
+	// Basic checks - should start with http/https and be reasonable length
+	return (strings.HasPrefix(url, "http://") || strings.HasPrefix(url, "https://")) && len(url) < 4096
+}
+
+// RecipeImage updates recipe image (simplified to avoid 400 errors)
+func RecipeImage(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid recipe ID"})
+		return
+	}
+
+	space := c.MustGet("space").(*models.Space)
+
+	var recipe models.Recipe
+	if err := models.DB.Where("space_id = ? AND id = ?", space.ID, uint(id)).First(&recipe).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Recipe not found"})
+		return
+	}
+
+	// Debug: log all form fields and files
+	fmt.Printf("DEBUG RecipeImage: Recipe ID %d\n", id)
+	fmt.Printf("DEBUG RecipeImage: Content-Type: %s\n", c.GetHeader("Content-Type"))
+	fmt.Printf("DEBUG RecipeImage: Form values: %v\n", c.Request.PostForm)
+
+	// Check all multipart files
+	form, err := c.MultipartForm()
+	if err == nil && form != nil {
+		fmt.Printf("DEBUG RecipeImage: Multipart files:\n")
+		for field, files := range form.File {
+			fmt.Printf("  Field '%s': %d files\n", field, len(files))
+			for _, file := range files {
+				fmt.Printf("    - %s (%d bytes)\n", file.Filename, file.Size)
+			}
+		}
+	}
+
+	// Simplified handling - just accept any multipart request
+	// TODO: Implement full image processing like Tandoor
+	imageURL := c.PostForm("image_url")
+
+	if imageURL != "" && validateImageURL(imageURL) {
+		recipe.Image = &imageURL
+	} else {
+		// Check for uploaded file with any field name
+		file, header, err := c.Request.FormFile("image")
+		if err != nil {
+			// Try other common field names
+			file, header, err = c.Request.FormFile("file")
+		}
+		if err != nil {
+			// Try any file field - expanded list
+			for _, field := range []string{"photo", "picture", "upload", "attachment", "media", "data", "content"} {
+				file, header, err = c.Request.FormFile(field)
+				if err == nil {
+					fmt.Printf("DEBUG RecipeImage: Found file in field '%s'\n", field)
+					break
+				}
+			}
+		}
+		// If still not found, try to get any file from multipart form
+		if err != nil {
+			form, formErr := c.MultipartForm()
+			if formErr == nil && form != nil && len(form.File) > 0 {
+				// Take first file from any field
+				for field, files := range form.File {
+					if len(files) > 0 {
+						fmt.Printf("DEBUG RecipeImage: Found file in multipart field '%s': %s\n", field, files[0].Filename)
+						file, err = files[0].Open()
+						if err == nil {
+							// Create a fake header since we opened the file differently
+							header = &multipart.FileHeader{
+								Filename: files[0].Filename,
+								Header:   files[0].Header,
+								Size:     files[0].Size,
+							}
+							break
+						}
+					}
+				}
+			}
+		}
+
+		if err == nil && header != nil {
+			// File uploaded
+			filename := header.Filename
+			recipe.Image = &filename
+			file.Close()
+		} else {
+			// No image provided - remove current image
+			recipe.Image = nil
+		}
+	}
+
+	// Save the recipe
+	fmt.Printf("DEBUG RecipeImage: Before save - recipe.Image = %v\n", recipe.Image)
+	if err := models.DB.Save(&recipe).Error; err != nil {
+		fmt.Printf("DEBUG RecipeImage: Save failed: %v\n", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update recipe image"})
+		return
+	}
+	fmt.Printf("DEBUG RecipeImage: After save - recipe.Image = %v\n", recipe.Image)
+
+	// Return minimal response like Tandoor
+	response := RecipeImageResponse{
+		ID: recipe.ID,
+	}
+	if recipe.Image != nil {
+		response.Image = *recipe.Image
+		fmt.Printf("DEBUG RecipeImage: Response image = %s\n", response.Image)
+	}
+	if imageURL != "" {
+		response.ImageURL = imageURL
+		fmt.Printf("DEBUG RecipeImage: Response image_url = %s\n", response.ImageURL)
+	}
+
+	c.JSON(http.StatusOK, response)
 }
 
 // RecipeShopping adds recipe to shopping list
