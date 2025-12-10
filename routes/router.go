@@ -122,6 +122,14 @@ func SetupRouter() *gin.Engine {
 		protected.PATCH("/keyword/:id/", UpdateKeyword)
 		protected.DELETE("/keyword/:id/", DeleteKeyword)
 
+		// Cook log routes
+		protected.GET("/cook-log/", GetCookLogs)
+		protected.POST("/cook-log/", CreateCookLog)
+		protected.GET("/cook-log/:id/", GetCookLog)
+		protected.PUT("/cook-log/:id/", UpdateCookLog)
+		protected.PATCH("/cook-log/:id/", UpdateCookLog)
+		protected.DELETE("/cook-log/:id/", DeleteCookLog)
+
 		// Meal type routes
 		protected.GET("/meal-type/", GetMealTypes)
 		protected.POST("/meal-type/", CreateMealType)

@@ -2,6 +2,7 @@ package models
 
 import (
 	"time"
+
 	"gorm.io/gorm"
 )
 
@@ -32,6 +33,7 @@ func AutoMigrate() {
 		&Step{},
 		&Property{},
 		&PropertyType{},
+		&CookLog{},
 	)
 	if err != nil {
 		panic("Failed to migrate database: " + err.Error())
