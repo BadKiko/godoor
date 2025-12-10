@@ -95,7 +95,7 @@ func GetRecipe(c *gin.Context) {
 		return
 	}
 
-	response := serializers.SerializeRecipeOverview(&recipe)
+	response := serializers.SerializeRecipe(&recipe)
 	c.JSON(http.StatusOK, response)
 }
 
@@ -132,7 +132,7 @@ func CreateRecipe(c *gin.Context) {
 		return
 	}
 
-	response := serializers.SerializeRecipeOverview(recipe)
+	response := serializers.SerializeRecipe(recipe)
 	c.JSON(http.StatusCreated, response)
 }
 
@@ -193,7 +193,7 @@ func UpdateRecipe(c *gin.Context) {
 		return
 	}
 
-	response := serializers.SerializeRecipeOverview(&recipe)
+	response := serializers.SerializeRecipe(&recipe)
 	c.JSON(http.StatusOK, response)
 }
 
