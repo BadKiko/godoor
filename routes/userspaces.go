@@ -67,7 +67,7 @@ func UpdateUserSpace(c *gin.Context) {
 	}
 
 	// Check permissions (only space owner can change other users' settings)
-	if userSpace.User.ID != currentUser.ID && (userSpace.Space.CreatedByID == nil || *userSpace.Space.CreatedByID != currentUser.ID) {
+	if userSpace.User.ID != currentUser.ID && userSpace.Space.CreatedByID != currentUser.ID {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Permission denied"})
 		return
 	}

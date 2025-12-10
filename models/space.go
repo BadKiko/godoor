@@ -6,8 +6,8 @@ package models
 type Space struct {
 	BaseModel
 	Name        string    `json:"name" gorm:"default:'Default'"`
-	CreatedByID *uint     `json:"-" gorm:"column:created_by_id"`
-	CreatedBy   *User     `json:"created_by,omitempty" gorm:"foreignKey:CreatedByID;references:ID"`
+	CreatedByID uint      `json:"-" gorm:"column:created_by_id"`
+	CreatedBy   User      `json:"created_by,omitempty" gorm:"foreignKey:CreatedByID;references:ID"`
 	Message     string    `json:"message" gorm:"default:''"`
 }
 
@@ -40,8 +40,8 @@ func CreateSpaceForUser(user *User, name *string) (*UserSpace, error) {
 
 	space := Space{
 		Name:        spaceName,
-		CreatedByID: &user.ID,
-		CreatedBy:   user,
+		CreatedByID: user.ID,
+		CreatedBy:   *user,
 	}
 
 	if err := DB.Create(&space).Error; err != nil {
@@ -61,4 +61,20 @@ func CreateSpaceForUser(user *User, name *string) (*UserSpace, error) {
 	}
 
 	return &userSpace, nil
+}
+
+// CreateSpace creates a new space
+func CreateSpace(createdBy *User, name, message string) (*Space, error) {
+	space := Space{
+		Name:        name,
+		CreatedByID: createdBy.ID,
+		CreatedBy:   *createdBy,
+		Message:     message,
+	}
+
+	if err := DB.Create(&space).Error; err != nil {
+		return nil, err
+	}
+
+	return &space, nil
 }

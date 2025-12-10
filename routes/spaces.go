@@ -74,10 +74,8 @@ func GetSpace(c *gin.Context) {
 	}
 
 	response := serializers.SerializeSpace(&userSpace.Space)
-	if userSpace.Space.CreatedBy != nil {
-		createdBy := serializers.SerializeUser(userSpace.Space.CreatedBy)
-		response.CreatedBy = &createdBy
-	}
+	createdBy := serializers.SerializeUser(&userSpace.Space.CreatedBy)
+	response.CreatedBy = &createdBy
 
 	c.JSON(http.StatusOK, response)
 }
@@ -111,7 +109,7 @@ func UpdateSpace(c *gin.Context) {
 	}
 
 	// Check ownership
-	if space.CreatedByID == nil || *space.CreatedByID != user.ID {
+	if space.CreatedByID != user.ID {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Only space owner can update space"})
 		return
 	}

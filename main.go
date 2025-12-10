@@ -25,6 +25,38 @@ func createTestUser() {
 		}
 
 		log.Printf("Test user created: %s (ID: %d)", user.Username, user.ID)
+
+		// Create test space if none exist
+		var spaceCount int64
+		models.DB.Model(&models.Space{}).Count(&spaceCount)
+		if spaceCount == 0 {
+			log.Println("Creating test space...")
+			space, err := models.CreateSpace(user, "Default", "")
+			if err != nil {
+				log.Fatal("Failed to create test space:", err)
+			}
+
+			// Create test foods
+			foods := []struct {
+				name        string
+				description string
+			}{
+				{"Tomato", "Fresh red tomato"},
+				{"Onion", "Yellow cooking onion"},
+				{"Garlic", "Fresh garlic cloves"},
+				{"Olive Oil", "Extra virgin olive oil"},
+				{"Salt", "Sea salt"},
+				{"Black Pepper", "Ground black pepper"},
+			}
+
+			for _, foodData := range foods {
+				_, err := models.CreateFood(space, foodData.name, foodData.description)
+				if err != nil {
+					log.Printf("Failed to create food %s: %v", foodData.name, err)
+				}
+			}
+			log.Println("Test foods created")
+		}
 	}
 }
 

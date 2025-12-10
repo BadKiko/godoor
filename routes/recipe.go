@@ -74,14 +74,8 @@ func GetRecipes(c *gin.Context) {
 		return
 	}
 
-	// Serialize response
-	response := map[string]interface{}{
-		"count":    totalCount,
-		"next":     nil, // TODO: implement pagination links
-		"previous": nil, // TODO: implement pagination links
-		"results":  serializers.SerializeRecipes(recipes),
-	}
-
+	// Serialize response using paginated serializer
+	response := serializers.SerializeRecipes(recipes, int(totalCount))
 	c.JSON(http.StatusOK, response)
 }
 

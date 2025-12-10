@@ -30,6 +30,14 @@ func SerializeUser(user *models.User) UserSerializer {
 	}
 }
 
+// UserIDSerializer for cases where only user ID is needed
+type UserIDSerializer uint
+
+// SerializeUserID converts User model to just ID
+func SerializeUserID(user *models.User) UserIDSerializer {
+	return UserIDSerializer(user.ID)
+}
+
 // SerializeUsers converts slice of User models to slice of UserSerializers
 func SerializeUsers(users []models.User) []UserSerializer {
 	result := make([]UserSerializer, len(users))

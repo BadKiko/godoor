@@ -37,6 +37,8 @@ type MealPlan struct {
 	FromDate   time.Time `json:"from_date"`
 	ToDate     time.Time `json:"to_date"`
 
+	// TODO: Add shared ManyToMany relationship with User (related_name='plan_share')
+
 	SpaceID uint  `json:"-" gorm:"not null"`
 	Space   Space `json:"-" gorm:"foreignKey:SpaceID;references:ID"`
 
