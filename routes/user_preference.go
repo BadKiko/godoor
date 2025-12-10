@@ -1,13 +1,14 @@
 package routes
 
 import (
-	"net/http"
 	"godoor/models"
 	"godoor/serializers"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 )
 
-// GetUserPreference returns current user's preferences
+// GetUserPreference returns current user's preferences as array
 func GetUserPreference(c *gin.Context) {
 	user := c.MustGet("user").(*models.User)
 
@@ -17,7 +18,9 @@ func GetUserPreference(c *gin.Context) {
 		return
 	}
 
-	response := serializers.SerializeUserPreference(preference)
+	response := []serializers.UserPreferenceSerializer{
+		serializers.SerializeUserPreference(preference),
+	}
 	c.JSON(http.StatusOK, response)
 }
 
@@ -193,6 +196,8 @@ func UpdateUserPreference(c *gin.Context) {
 
 	preference = &existingPreference
 
-	response := serializers.SerializeUserPreference(preference)
+	response := []serializers.UserPreferenceSerializer{
+		serializers.SerializeUserPreference(preference),
+	}
 	c.JSON(http.StatusOK, response)
 }

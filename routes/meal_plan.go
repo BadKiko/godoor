@@ -1,11 +1,12 @@
 package routes
 
 import (
+	"godoor/models"
+	"godoor/serializers"
 	"net/http"
 	"strconv"
 	"time"
-	"godoor/models"
-	"godoor/serializers"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -25,11 +26,11 @@ func GetMealTypes(c *gin.Context) {
 
 // CreateMealTypeRequest represents meal type creation request
 type CreateMealTypeRequest struct {
-	Name   string  `json:"name" binding:"required"`
-	Order  int     `json:"order,omitempty"`
-	Color  *string `json:"color,omitempty"`
-	Time   *string `json:"time,omitempty"`
-	Default bool   `json:"default,omitempty"`
+	Name    string  `json:"name" binding:"required"`
+	Order   int     `json:"order,omitempty"`
+	Color   *string `json:"color,omitempty"`
+	Time    *string `json:"time,omitempty"`
+	Default bool    `json:"default,omitempty"`
 }
 
 // CreateMealType creates a new meal type
@@ -83,7 +84,17 @@ func GetMealPlans(c *gin.Context) {
 		return
 	}
 
-	response := serializers.SerializeMealPlans(mealPlans)
+	// Return paginated response manually
+	response := map[string]interface{}{
+		"count":     len(mealPlans),
+		"next":      nil,
+		"previous":  nil,
+		"results":   make([]serializers.MealPlanSerializer, len(mealPlans)),
+		"timestamp": time.Now().Format(time.RFC3339),
+	}
+	for i, mealPlan := range mealPlans {
+		response["results"].([]serializers.MealPlanSerializer)[i] = serializers.SerializeMealPlan(&mealPlan)
+	}
 	c.JSON(http.StatusOK, response)
 }
 

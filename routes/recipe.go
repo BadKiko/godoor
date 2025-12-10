@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -141,6 +142,7 @@ func CreateRecipe(c *gin.Context) {
 
 	// Create steps if provided
 	if len(req.Steps) > 0 {
+		for _, stepData := range req.Steps {
 			step := models.Step{
 				Name:        stepData.Name,
 				Instruction: stepData.Instruction,
