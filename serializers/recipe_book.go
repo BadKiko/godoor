@@ -30,11 +30,24 @@ func SerializeRecipeBook(book *models.RecipeBook) RecipeBookSerializer {
 	}
 }
 
-// SerializeRecipeBooks converts slice of RecipeBook models to slice of serializers
-func SerializeRecipeBooks(books []models.RecipeBook) []RecipeBookSerializer {
+// RecipeBookListResponse represents paginated recipe book response matching Django REST Framework
+type RecipeBookListResponse struct {
+	Count    int                     `json:"count"`
+	Next     *string                 `json:"next"`
+	Previous *string                 `json:"previous"`
+	Results  []RecipeBookSerializer   `json:"results"`
+}
+
+// SerializeRecipeBooks converts slice of RecipeBook models to paginated response
+func SerializeRecipeBooks(books []models.RecipeBook) RecipeBookListResponse {
 	result := make([]RecipeBookSerializer, len(books))
 	for i, book := range books {
 		result[i] = SerializeRecipeBook(&book)
 	}
-	return result
+	return RecipeBookListResponse{
+		Count:    len(books),
+		Next:     nil, // TODO: implement pagination
+		Previous: nil, // TODO: implement pagination
+		Results:  result,
+	}
 }

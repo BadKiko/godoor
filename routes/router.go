@@ -1,8 +1,9 @@
 package routes
 
 import (
-	"net/http"
 	"godoor/middleware"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -36,7 +37,8 @@ func SetupRouter() *gin.Engine {
 	{
 		api.GET("/server-settings/current/", ServerSettingsCurrent)
 		api.GET("/", func(c *gin.Context) {
-			c.JSON(http.StatusForbidden, gin.H{"detail": "Authentication credentials were not provided."})
+			c.Header("Content-Type", "text/html; charset=utf-8")
+			c.String(http.StatusForbidden, `<html><body><h1>403 Forbidden</h1><p>Authentication credentials were not provided.</p></body></html>`)
 		})
 	}
 
@@ -79,6 +81,34 @@ func SetupRouter() *gin.Engine {
 		protected.PUT("/recipe-book/:id/", UpdateRecipeBook)
 		protected.PATCH("/recipe-book/:id/", UpdateRecipeBook)
 		protected.DELETE("/recipe-book/:id/", DeleteRecipeBook)
+
+		// Keyword routes
+		protected.GET("/keyword/", GetKeywords)
+		protected.POST("/keyword/", CreateKeyword)
+		protected.GET("/keyword/:id/", GetKeyword)
+		protected.PUT("/keyword/:id/", UpdateKeyword)
+		protected.PATCH("/keyword/:id/", UpdateKeyword)
+		protected.DELETE("/keyword/:id/", DeleteKeyword)
+
+		// Meal type routes
+		protected.GET("/meal-type/", GetMealTypes)
+		protected.POST("/meal-type/", CreateMealType)
+
+		// Meal plan routes
+		protected.GET("/meal-plan/", GetMealPlans)
+		protected.POST("/meal-plan/", CreateMealPlan)
+		protected.GET("/meal-plan/:id/", GetMealPlan)
+		protected.PUT("/meal-plan/:id/", UpdateMealPlan)
+		protected.PATCH("/meal-plan/:id/", UpdateMealPlan)
+		protected.DELETE("/meal-plan/:id/", DeleteMealPlan)
+
+		// Recipe routes
+		protected.GET("/recipe/", GetRecipes)
+		protected.POST("/recipe/", CreateRecipe)
+		protected.GET("/recipe/:id/", GetRecipe)
+		protected.PUT("/recipe/:id/", UpdateRecipe)
+		protected.PATCH("/recipe/:id/", UpdateRecipe)
+		protected.DELETE("/recipe/:id/", DeleteRecipe)
 	}
 
 	return r

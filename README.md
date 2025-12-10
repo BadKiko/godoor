@@ -38,6 +38,31 @@ Simple implementation of Tandoor recipe management system in Go.
 - `PUT/PATCH /api/recipe-book/:id/` - update recipe book
 - `DELETE /api/recipe-book/:id/` - delete recipe book
 
+### ✅ Keywords
+- `GET /api/keyword/` - list of keywords
+- `POST /api/keyword/` - create keyword
+- `GET /api/keyword/:id/` - get specific keyword
+- `PUT/PATCH /api/keyword/:id/` - update keyword
+- `DELETE /api/keyword/:id/` - delete keyword
+
+### ✅ Meal Types
+- `GET /api/meal-type/` - list of meal types
+- `POST /api/meal-type/` - create meal type
+
+### ✅ Meal Plans
+- `GET /api/meal-plan/` - list of meal plans (with date filtering)
+- `POST /api/meal-plan/` - create meal plan
+- `GET /api/meal-plan/:id/` - get specific meal plan
+- `PUT/PATCH /api/meal-plan/:id/` - update meal plan
+- `DELETE /api/meal-plan/:id/` - delete meal plan
+
+### ✅ Recipes
+- `GET /api/recipe/` - list of recipes (with sorting and pagination)
+- `POST /api/recipe/` - create recipe
+- `GET /api/recipe/:id/` - get specific recipe
+- `PUT/PATCH /api/recipe/:id/` - update recipe
+- `DELETE /api/recipe/:id/` - delete recipe
+
 ## Running
 
 ```bash
