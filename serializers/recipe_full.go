@@ -61,7 +61,7 @@ type RecipeSerializer struct {
 	Description           string            `json:"description,omitempty"`
 	Image                 interface{}       `json:"image"`
 	Keywords              []KeywordLabelSerializer `json:"keywords"`
-	Steps                 []StepSerializer `json:"steps"`
+	Steps                 []StepFullSerializer `json:"steps"`
 	WorkingTime           int               `json:"working_time"`
 	WaitingTime           int               `json:"waiting_time"`
 	CreatedBy             UserSerializer    `json:"created_by"`
@@ -92,8 +92,11 @@ func SerializeRecipe(recipe *models.Recipe) RecipeSerializer {
 	// TODO: implement proper keywords loading
 	keywords := []KeywordLabelSerializer{}
 
-	// TODO: implement steps serialization - for now return empty array
-	steps := []StepSerializer{}
+	// Serialize steps if loaded
+	steps := make([]StepFullSerializer, len(recipe.Steps))
+	for i, step := range recipe.Steps {
+		steps[i] = SerializeStep(&step)
+	}
 
 	// TODO: implement properties serialization
 	properties := []PropertySerializer{}
@@ -130,10 +133,10 @@ func SerializeRecipe(recipe *models.Recipe) RecipeSerializer {
 func SerializeRecipeWithSteps(recipe *models.Recipe, requestSteps []map[string]interface{}) RecipeSerializer {
 	base := SerializeRecipe(recipe)
 
-	// Convert request steps to StepSerializer format (basic conversion)
-	steps := make([]StepSerializer, len(requestSteps))
+	// Convert request steps to StepFullSerializer format (basic conversion)
+	steps := make([]StepFullSerializer, len(requestSteps))
 	for i, stepData := range requestSteps {
-		step := StepSerializer{
+		step := StepFullSerializer{
 			Name:                 getStringFromMap(stepData, "name"),
 			Instruction:          getStringFromMap(stepData, "instruction"),
 			Time:                 getIntFromMap(stepData, "time"),

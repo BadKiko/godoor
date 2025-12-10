@@ -21,8 +21,8 @@ type Recipe struct {
 	SpaceID     uint   `json:"-" gorm:"not null"`
 	Space       Space  `json:"-" gorm:"foreignKey:SpaceID;references:ID"`
 
-	// Many-to-many relationships
-	Steps      []Step     `json:"steps" gorm:"many2many:recipe_steps;"`
+	// One-to-many relationships
+	Steps      []Step     `json:"steps" gorm:"foreignKey:RecipeID"`
 	Properties []Property `json:"properties" gorm:"many2many:recipe_properties;"`
 
 	// Rating field for sorting (simplified)

@@ -34,7 +34,7 @@ func GetRecipes(c *gin.Context) {
 	}
 
 	// Build query
-	query := models.DB.Where("space_id = ?", space.ID).Preload("CreatedBy")
+	query := models.DB.Where("space_id = ?", space.ID).Preload("CreatedBy").Preload("Steps")
 
 	// Apply sorting
 	if sortOrder != "" {
@@ -90,7 +90,7 @@ func GetRecipe(c *gin.Context) {
 	space := c.MustGet("space").(*models.Space)
 
 	var recipe models.Recipe
-	if err := models.DB.Where("space_id = ? AND id = ?", space.ID, uint(id)).Preload("CreatedBy").First(&recipe).Error; err != nil {
+	if err := models.DB.Where("space_id = ? AND id = ?", space.ID, uint(id)).Preload("CreatedBy").Preload("Steps").First(&recipe).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Recipe not found"})
 		return
 	}
@@ -99,11 +99,20 @@ func GetRecipe(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+// StepCreate represents a step in create request
+type StepCreate struct {
+	Name        string `json:"name"`
+	Instruction string `json:"instruction"`
+	Time        int    `json:"time"`
+	Order       int    `json:"order"`
+}
+
 // CreateRecipeRequest represents recipe creation request
 type CreateRecipeRequest struct {
-	Name        string  `json:"name" binding:"required"`
-	Description *string `json:"description,omitempty"`
-	Servings    int     `json:"servings,omitempty"`
+	Name        string       `json:"name" binding:"required"`
+	Description *string      `json:"description,omitempty"`
+	Servings    int          `json:"servings,omitempty"`
+	Steps       []StepCreate `json:"steps"`
 }
 
 // CreateRecipe creates a new recipe
@@ -113,6 +122,9 @@ func CreateRecipe(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request format"})
 		return
 	}
+
+	// Debug logging
+	fmt.Printf("DEBUG: Recipe name: %s, Steps count: %d\n", req.Name, len(req.Steps))
 
 	user := c.MustGet("user").(*models.User)
 	space := c.MustGet("space").(*models.Space)
@@ -127,7 +139,26 @@ func CreateRecipe(c *gin.Context) {
 		return
 	}
 
-	if err := models.DB.Preload("CreatedBy").First(recipe, recipe.ID).Error; err != nil {
+	// Create steps if provided
+	if len(req.Steps) > 0 {
+			step := models.Step{
+				Name:        stepData.Name,
+				Instruction: stepData.Instruction,
+				Time:        stepData.Time,
+				Order:       stepData.Order,
+				RecipeID:    recipe.ID,
+				Recipe:      *recipe,
+				SpaceID:     space.ID,
+				Space:       *space,
+			}
+
+			if err := models.DB.Create(&step).Error; err != nil {
+				continue // Skip failed steps
+			}
+		}
+	}
+
+	if err := models.DB.Preload("CreatedBy").Preload("Steps").First(recipe, recipe.ID).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to reload recipe"})
 		return
 	}
@@ -202,6 +233,7 @@ func UpdateRecipe(c *gin.Context) {
 
 	// Handle steps - delete existing and create new ones
 	var responseSteps []map[string]interface{}
+
 	if req.Steps != nil && len(req.Steps) > 0 {
 		// Delete existing steps for this recipe
 		models.DB.Where("recipe_id = ?", recipe.ID).Delete(&models.Step{})
@@ -241,6 +273,32 @@ func UpdateRecipe(c *gin.Context) {
 				"numrecipe":           0,
 			}
 		}
+	} else {
+		// If no steps provided in request, get existing steps for the recipe
+		var existingSteps []models.Step
+		if err := models.DB.Where("recipe_id = ?", recipe.ID).Find(&existingSteps).Error; err == nil {
+			responseSteps = make([]map[string]interface{}, len(existingSteps))
+			for i, step := range existingSteps {
+				responseSteps[i] = map[string]interface{}{
+					"id":                   step.ID,
+					"name":                 step.Name,
+					"instruction":          step.Instruction,
+					"time":                 step.Time,
+					"order":                step.Order,
+					"show_as_header":       step.ShowAsHeader,
+					"show_ingredients_table": step.ShowIngredientsTable,
+					"ingredients":          []interface{}{}, // TODO: implement ingredients
+					"instructions_markdown": step.Instruction, // TODO: implement markdown
+					"file":                 nil,
+					"step_recipe":          nil,
+					"step_recipe_data":     nil,
+					"numrecipe":           0,
+				}
+			}
+		} else {
+			// If no existing steps, return empty array
+			responseSteps = []map[string]interface{}{}
+		}
 	}
 
 	if err := models.DB.Preload("CreatedBy").First(&recipe, recipe.ID).Error; err != nil {
@@ -276,7 +334,6 @@ func UpdateRecipe(c *gin.Context) {
 		"shared":                []interface{}{},
 	}
 
-	c.JSON(http.StatusOK, response)
 	c.JSON(http.StatusOK, response)
 }
 
