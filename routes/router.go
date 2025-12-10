@@ -37,8 +37,40 @@ func SetupRouter() *gin.Engine {
 	{
 		api.GET("/server-settings/current/", ServerSettingsCurrent)
 		api.GET("/", func(c *gin.Context) {
-			c.Header("Content-Type", "text/html; charset=utf-8")
-			c.String(http.StatusForbidden, `<html><body><h1>403 Forbidden</h1><p>Authentication credentials were not provided.</p></body></html>`)
+			// API root endpoint - return available endpoints like Django REST Framework
+			rootResponse := gin.H{
+				"automation":           "/api/automation/",
+				"bookmarklet-import":   "/api/bookmarklet-import/",
+				"cook-log":             "/api/cook-log/",
+				"custom-filter":        "/api/custom-filter/",
+				"food":                 "/api/food/",
+				"food-inherit-field":   "/api/food-inherit-field/",
+				"group":                "/api/group/",
+				"import-log":           "/api/import-log/",
+				"ingredient":           "/api/ingredient/",
+				"invite-link":          "/api/invite-link/",
+				"keyword":              "/api/keyword/",
+				"meal-plan":            "/api/meal-plan/",
+				"meal-type":            "/api/meal-type/",
+				"recipe":               "/api/recipe/",
+				"recipe-book":          "/api/recipe-book/",
+				"recipe-book-entry":    "/api/recipe-book-entry/",
+				"server-settings":      "/api/server-settings/",
+				"shopping-list":        "/api/shopping-list/",
+				"shopping-list-entry":  "/api/shopping-list-entry/",
+				"shopping-list-recipe": "/api/shopping-list-recipe/",
+				"space":                "/api/space/",
+				"step":                 "/api/step/",
+				"storage":              "/api/storage/",
+				"supermarket":          "/api/supermarket/",
+				"supermarket-category": "/api/supermarket-category/",
+				"unit":                 "/api/unit/",
+				"unit-conversion":      "/api/unit-conversion/",
+				"user":                 "/api/user/",
+				"user-preference":      "/api/user-preference/",
+				"user-space":           "/api/user-space/",
+			}
+			c.JSON(200, rootResponse)
 		})
 	}
 
