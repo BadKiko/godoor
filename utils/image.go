@@ -126,3 +126,4 @@ func DeleteImageFile(imagePath string) error {
 	fullPath := filepath.Join(getMediaRoot(), imagePath)
 	return os.Remove(fullPath)
 }
+

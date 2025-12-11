@@ -4,6 +4,7 @@ import (
 	"godoor/config"
 	"godoor/models"
 	"time"
+	"github.com/gomarkdown/markdown"
 )
 
 // getRecipeImageURL returns full image URL or nil if no image
@@ -150,9 +151,16 @@ func SerializeRecipeWithSteps(recipe *models.Recipe, requestSteps []map[string]i
 	// Convert request steps to StepFullSerializer format (basic conversion)
 	steps := make([]StepFullSerializer, len(requestSteps))
 	for i, stepData := range requestSteps {
+		instruction := getStringFromMap(stepData, "instruction")
+		// Render markdown to HTML
+		markdownBytes := []byte(instruction)
+		htmlBytes := markdown.ToHTML(markdownBytes, nil, nil)
+		instructionsHTML := string(htmlBytes)
+
 		step := StepFullSerializer{
 			Name:                 getStringFromMap(stepData, "name"),
-			Instruction:          getStringFromMap(stepData, "instruction"),
+			Instruction:          instruction,
+			InstructionsMarkdown: instructionsHTML,
 			Time:                 getIntFromMap(stepData, "time"),
 			Order:                getIntFromMap(stepData, "order"),
 			ShowAsHeader:         true, // default

@@ -3,6 +3,7 @@ package serializers
 import (
 	"godoor/models"
 	"time"
+	"github.com/gomarkdown/markdown"
 )
 
 // StepFullSerializer matching Tandoor StepSerializer (full version for step endpoints)
@@ -24,12 +25,17 @@ type StepFullSerializer struct {
 
 // SerializeStep converts Step model to serializer
 func SerializeStep(step *models.Step) StepFullSerializer {
+	// Render markdown to HTML
+	markdownBytes := []byte(step.Instruction)
+	htmlBytes := markdown.ToHTML(markdownBytes, nil, nil)
+	instructionsHTML := string(htmlBytes)
+
 	return StepFullSerializer{
 		ID:                   step.ID,
 		Name:                 step.Name,
 		Instruction:          step.Instruction,
 		Ingredients:          []IngredientSerializer{}, // TODO: implement ingredients
-		InstructionsMarkdown: step.Instruction,          // TODO: implement markdown rendering
+		InstructionsMarkdown: instructionsHTML,
 		Time:                 step.Time,
 		Order:                step.Order,
 		ShowAsHeader:         step.ShowAsHeader,
