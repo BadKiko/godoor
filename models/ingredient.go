@@ -11,7 +11,7 @@ type Ingredient struct {
 	Food     *Food   `json:"food,omitempty" gorm:"foreignKey:FoodID;references:ID"`
 	UnitID   *uint   `json:"-" gorm:"index"`
 	Unit     *Unit   `json:"unit,omitempty" gorm:"foreignKey:UnitID;references:ID"`
-	Amount   float64 `json:"amount" gorm:"type:decimal(16,16);default:0"`
+	Amount   float64 `json:"amount" gorm:"type:REAL;default:0"`
 	Note     string  `json:"note" gorm:"default:''"`
 	IsHeader bool    `json:"is_header" gorm:"default:false"`
 	NoAmount bool    `json:"no_amount" gorm:"default:false"`

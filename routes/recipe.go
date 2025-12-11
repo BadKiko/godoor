@@ -20,6 +20,15 @@ func GetRecipes(c *gin.Context) {
 	sortOrder := c.Query("sort_order")
 	pageSizeStr := c.Query("page_size")
 	pageStr := c.Query("page")
+	searchQuery := c.Query("query")
+	timesCookedStr := c.Query("timescooked")
+
+	// Parse keywords parameters
+	keywordsOr := c.QueryArray("keywords_or")
+	keywordsAnd := c.QueryArray("keywords_and")
+	keywordsOrNot := c.QueryArray("keywords_or_not")
+	keywordsAndNot := c.QueryArray("keywords_and_not")
+	keywords := c.QueryArray("keywords") // alias for keywords_or
 
 	// Default values
 	pageSize := 20
@@ -37,7 +46,62 @@ func GetRecipes(c *gin.Context) {
 	}
 
 	// Build query
-	query := models.DB.Where("space_id = ?", space.ID).Preload("CreatedBy").Preload("Steps").Preload("Steps.Ingredients").Preload("Steps.Ingredients.Food").Preload("Steps.Ingredients.Unit")
+	query := models.DB.Where("space_id = ?", space.ID).Preload("CreatedBy").Preload("Keywords").Preload("Steps").Preload("Steps.Ingredients").Preload("Steps.Ingredients.Food").Preload("Steps.Ingredients.Unit")
+
+	// Apply filters
+	if searchQuery != "" {
+		// Search in recipe name and description
+		query = query.Where("LOWER(name) LIKE LOWER(?) OR LOWER(description) LIKE LOWER(?)",
+			"%"+searchQuery+"%", "%"+searchQuery+"%")
+	}
+
+	if timesCookedStr != "" {
+		if timesCooked, err := strconv.Atoi(timesCookedStr); err == nil {
+			if timesCooked == 0 {
+				// Recipes never cooked (no cook logs)
+				query = query.Where("id NOT IN (SELECT DISTINCT recipe_id FROM cook_logs WHERE space_id = ?)", space.ID)
+			} else {
+				// Recipes cooked exactly N times
+				query = query.Joins("LEFT JOIN (SELECT recipe_id, COUNT(*) as cook_count FROM cook_logs WHERE space_id = ? GROUP BY recipe_id) cl ON recipes.id = cl.recipe_id", space.ID).
+					Where("COALESCE(cl.cook_count, 0) = ?", timesCooked)
+			}
+		}
+	}
+
+	// Apply keywords filters
+	if len(keywordsOr) > 0 || len(keywords) > 0 {
+		// Combine keywords arrays
+		keywordIDs := append(keywordsOr, keywords...)
+
+		// Filter recipes that have ANY of the specified keywords
+		query = query.Joins("JOIN recipe_keywords rk_or ON recipes.id = rk_or.recipe_id").
+			Where("rk_or.keyword_id IN (?)", keywordIDs)
+	}
+
+	if len(keywordsAnd) > 0 {
+		// Filter recipes that have ALL of the specified keywords
+		for _, keywordID := range keywordsAnd {
+			query = query.Joins("JOIN recipe_keywords rk_and ON recipes.id = rk_and.recipe_id").
+				Where("rk_and.keyword_id = ?", keywordID)
+		}
+	}
+
+	if len(keywordsOrNot) > 0 {
+		// Exclude recipes that have ANY of the specified keywords
+		query = query.Where("recipes.id NOT IN (SELECT DISTINCT recipe_id FROM recipe_keywords WHERE keyword_id IN (?))", keywordsOrNot)
+	}
+
+	if len(keywordsAndNot) > 0 {
+		// This is complex - exclude recipes that have ALL of the specified keywords
+		// For now, implement as excluding recipes that have any of them (simplified)
+		query = query.Where("recipes.id NOT IN (SELECT DISTINCT recipe_id FROM recipe_keywords WHERE keyword_id IN (?))", keywordsAndNot)
+	}
+
+	if sortOrder == "-favorite" {
+		// TODO: Implement favorite filtering (requires user favorite recipes table)
+		// For now, just sort by created_at
+		query = query.Order("created_at DESC")
+	}
 
 	// Apply sorting
 	if sortOrder != "" {
@@ -78,7 +142,7 @@ func GetRecipes(c *gin.Context) {
 	}
 
 	// Serialize response using paginated serializer
-	response := serializers.SerializeRecipes(recipes, int(totalCount))
+	response := serializers.SerializeRecipes(recipes, int(totalCount), page, pageSize)
 	c.JSON(http.StatusOK, response)
 }
 

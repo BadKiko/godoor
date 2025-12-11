@@ -13,6 +13,9 @@ type Keyword struct {
 	SpaceID uint  `json:"-" gorm:"not null"`
 	Space   Space `json:"-" gorm:"foreignKey:SpaceID;references:ID"`
 
+	// Many-to-many with recipes
+	Recipes []Recipe `json:"-" gorm:"many2many:recipe_keywords;"`
+
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }

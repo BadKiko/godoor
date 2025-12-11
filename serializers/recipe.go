@@ -1,6 +1,7 @@
 package serializers
 
 import (
+	"fmt"
 	"godoor/config"
 	"godoor/models"
 	"time"
@@ -49,8 +50,11 @@ func SerializeRecipeOverview(recipe *models.Recipe) RecipeOverviewSerializer {
 		description = *recipe.Description
 	}
 
-	// TODO: implement proper keywords loading
-	keywords := []KeywordLabelSerializer{}
+	// Load keywords for recipe - they should be preloaded by the query
+	var keywords []KeywordLabelSerializer
+	for _, keyword := range recipe.Keywords {
+		keywords = append(keywords, SerializeKeywordLabel(&keyword))
+	}
 
 	// TODO: implement new recipe logic (recipe created within last 7 days?)
 	isNew := time.Since(recipe.CreatedAt).Hours() < 24*7
@@ -90,15 +94,32 @@ type RecipeListResponse struct {
 }
 
 // SerializeRecipes converts slice of Recipe models to paginated response
-func SerializeRecipes(recipes []models.Recipe, totalCount int) RecipeListResponse {
+func SerializeRecipes(recipes []models.Recipe, totalCount int, page int, pageSize int) RecipeListResponse {
 	result := make([]RecipeOverviewSerializer, len(recipes))
 	for i, recipe := range recipes {
 		result[i] = SerializeRecipeOverview(&recipe)
 	}
+
+	// Calculate pagination URLs
+	var next, previous *string
+
+	// Calculate if there are more pages
+	totalPages := (totalCount + pageSize - 1) / pageSize // Ceiling division
+
+	if page < totalPages {
+		nextURL := fmt.Sprintf("?page=%d&page_size=%d", page+1, pageSize)
+		next = &nextURL
+	}
+
+	if page > 1 {
+		prevURL := fmt.Sprintf("?page=%d&page_size=%d", page-1, pageSize)
+		previous = &prevURL
+	}
+
 	return RecipeListResponse{
 		Count:     totalCount,
-		Next:      nil, // TODO: implement pagination
-		Previous:  nil, // TODO: implement pagination
+		Next:      next,
+		Previous:  previous,
 		Results:   result,
 		Timestamp: time.Now().Format(time.RFC3339),
 	}
