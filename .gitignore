@@ -23,6 +23,8 @@ go.work
 # Go module proxy cache
 /pkg/
 
+media/
+
 # Go build output
 /bin/
 /dist/

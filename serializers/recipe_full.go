@@ -1,25 +1,39 @@
 package serializers
 
 import (
+	"godoor/config"
 	"godoor/models"
 	"time"
 )
 
+// getRecipeImageURL returns full image URL or nil if no image
+func getRecipeImageURL(imagePath *string) interface{} {
+	if imagePath != nil && *imagePath != "" {
+		// If it's already a full URL (starts with http), return as is
+		if len(*imagePath) > 4 && (*imagePath)[:4] == "http" {
+			return *imagePath
+		}
+		// Otherwise, prepend MEDIA_URL
+		return config.MediaURL + *imagePath
+	}
+	return nil
+}
+
 // IngredientSerializer matching Tandoor IngredientSerializer
 type IngredientSerializer struct {
-	ID                     uint                   `json:"id"`
-	Food                   interface{}            `json:"food"` // FoodSerializer, TODO: implement
-	Unit                   interface{}            `json:"unit"` // UnitSerializer, TODO: implement
-	Amount                 float64                `json:"amount"`
-	Conversions            []interface{}          `json:"conversions"` // TODO: implement conversions
-	Note                   string                 `json:"note"`
-	Order                  int                    `json:"order"`
-	IsHeader               bool                   `json:"is_header"`
-	NoAmount               bool                   `json:"no_amount"`
-	OriginalText           string                 `json:"original_text"`
-	UsedInRecipes          []interface{}          `json:"used_in_recipes"` // TODO: implement
-	AlwaysUsePluralUnit    bool                   `json:"always_use_plural_unit"`
-	AlwaysUsePluralFood    bool                   `json:"always_use_plural_food"`
+	ID                  uint          `json:"id"`
+	Food                interface{}   `json:"food"` // FoodSerializer, TODO: implement
+	Unit                interface{}   `json:"unit"` // UnitSerializer, TODO: implement
+	Amount              float64       `json:"amount"`
+	Conversions         []interface{} `json:"conversions"` // TODO: implement conversions
+	Note                string        `json:"note"`
+	Order               int           `json:"order"`
+	IsHeader            bool          `json:"is_header"`
+	NoAmount            bool          `json:"no_amount"`
+	OriginalText        string        `json:"original_text"`
+	UsedInRecipes       []interface{} `json:"used_in_recipes"` // TODO: implement
+	AlwaysUsePluralUnit bool          `json:"always_use_plural_unit"`
+	AlwaysUsePluralFood bool          `json:"always_use_plural_food"`
 }
 
 // StepSerializer matching Tandoor StepSerializer
@@ -56,30 +70,30 @@ type PropertySerializer struct {
 
 // RecipeSerializer full serializer matching Tandoor RecipeSerializer
 type RecipeSerializer struct {
-	ID                    uint              `json:"id"`
-	Name                  string            `json:"name"`
-	Description           string            `json:"description,omitempty"`
-	Image                 interface{}       `json:"image"`
-	Keywords              []KeywordLabelSerializer `json:"keywords"`
-	Steps                 []StepFullSerializer `json:"steps"`
-	WorkingTime           int               `json:"working_time"`
-	WaitingTime           int               `json:"waiting_time"`
-	CreatedBy             UserSerializer    `json:"created_by"`
-	CreatedAt             time.Time         `json:"created_at"`
-	UpdatedAt             time.Time         `json:"updated_at"`
-	SourceURL             string            `json:"source_url"`
-	Internal              bool              `json:"internal"`
-	ShowIngredientOverview bool             `json:"show_ingredient_overview"`
-	Nutrition             interface{}       `json:"nutrition"` // TODO: implement NutritionInformation
-	Properties            []PropertySerializer `json:"properties"`
-	FoodProperties        *map[string]interface{} `json:"food_properties"` // TODO: implement food properties calculation
-	Servings              int               `json:"servings"`
-	FilePath              string            `json:"file_path"`
-	ServingsText          string            `json:"servings_text"`
-	Rating                *float64          `json:"rating,omitempty"`
-	LastCooked            *time.Time        `json:"last_cooked,omitempty"`
-	Private               bool              `json:"private"`
-	Shared                []interface{}     `json:"shared"` // TODO: implement shared users
+	ID                     uint                     `json:"id"`
+	Name                   string                   `json:"name"`
+	Description            string                   `json:"description,omitempty"`
+	Image                  interface{}              `json:"image"`
+	Keywords               []KeywordLabelSerializer `json:"keywords"`
+	Steps                  []StepFullSerializer     `json:"steps"`
+	WorkingTime            int                      `json:"working_time"`
+	WaitingTime            int                      `json:"waiting_time"`
+	CreatedBy              UserSerializer           `json:"created_by"`
+	CreatedAt              time.Time                `json:"created_at"`
+	UpdatedAt              time.Time                `json:"updated_at"`
+	SourceURL              string                   `json:"source_url"`
+	Internal               bool                     `json:"internal"`
+	ShowIngredientOverview bool                     `json:"show_ingredient_overview"`
+	Nutrition              interface{}              `json:"nutrition"` // TODO: implement NutritionInformation
+	Properties             []PropertySerializer     `json:"properties"`
+	FoodProperties         *map[string]interface{}  `json:"food_properties"` // TODO: implement food properties calculation
+	Servings               int                      `json:"servings"`
+	FilePath               string                   `json:"file_path"`
+	ServingsText           string                   `json:"servings_text"`
+	Rating                 *float64                 `json:"rating,omitempty"`
+	LastCooked             *time.Time               `json:"last_cooked,omitempty"`
+	Private                bool                     `json:"private"`
+	Shared                 []interface{}            `json:"shared"` // TODO: implement shared users
 }
 
 // SerializeRecipe converts Recipe model to full serializer
@@ -102,30 +116,30 @@ func SerializeRecipe(recipe *models.Recipe) RecipeSerializer {
 	properties := []PropertySerializer{}
 
 	return RecipeSerializer{
-		ID:                    recipe.ID,
-		Name:                  recipe.Name,
-		Description:           description,
-		Image:                 recipe.Image,
-		Keywords:              keywords,
-		Steps:                 steps,
-		WorkingTime:           recipe.WorkingTime,
-		WaitingTime:           recipe.WaitingTime,
-		CreatedBy:             SerializeUser(&recipe.CreatedBy),
-		CreatedAt:             recipe.CreatedAt,
-		UpdatedAt:             recipe.UpdatedAt,
-		SourceURL:             "", // TODO: implement source URL
-		Internal:              recipe.Internal,
+		ID:                     recipe.ID,
+		Name:                   recipe.Name,
+		Description:            description,
+		Image:                  getRecipeImageURL(recipe.Image),
+		Keywords:               keywords,
+		Steps:                  steps,
+		WorkingTime:            recipe.WorkingTime,
+		WaitingTime:            recipe.WaitingTime,
+		CreatedBy:              SerializeUser(&recipe.CreatedBy),
+		CreatedAt:              recipe.CreatedAt,
+		UpdatedAt:              recipe.UpdatedAt,
+		SourceURL:              "", // TODO: implement source URL
+		Internal:               recipe.Internal,
 		ShowIngredientOverview: true, // TODO: implement this field
-		Nutrition:             nil, // TODO: implement nutrition
-		Properties:            properties,
-		FoodProperties:        &map[string]interface{}{}, // TODO: implement food properties calculation
-		Servings:              recipe.Servings,
-		FilePath:              "", // TODO: implement file path
-		ServingsText:          recipe.ServingsText,
-		Rating:                recipe.Rating,
-		LastCooked:            nil, // TODO: implement last cooked
-		Private:               recipe.Private,
-		Shared:                []interface{}{}, // TODO: implement shared users
+		Nutrition:              nil,  // TODO: implement nutrition
+		Properties:             properties,
+		FoodProperties:         &map[string]interface{}{}, // TODO: implement food properties calculation
+		Servings:               recipe.Servings,
+		FilePath:               "", // TODO: implement file path
+		ServingsText:           recipe.ServingsText,
+		Rating:                 recipe.Rating,
+		LastCooked:             nil, // TODO: implement last cooked
+		Private:                recipe.Private,
+		Shared:                 []interface{}{}, // TODO: implement shared users
 	}
 }
 
@@ -153,17 +167,17 @@ func SerializeRecipeWithSteps(recipe *models.Recipe, requestSteps []map[string]i
 					for j, ingData := range ingredientsSlice {
 						if ingMap, ok := ingData.(map[string]interface{}); ok {
 							ingredients[j] = IngredientSerializer{
-								Amount: getFloatFromMap(ingMap, "amount"),
-								Note:   getStringFromMap(ingMap, "note"),
-								Order:  getIntFromMap(ingMap, "order"),
-								IsHeader: getBoolFromMap(ingMap, "is_header"),
-								NoAmount: getBoolFromMap(ingMap, "no_amount"),
+								Amount:       getFloatFromMap(ingMap, "amount"),
+								Note:         getStringFromMap(ingMap, "note"),
+								Order:        getIntFromMap(ingMap, "order"),
+								IsHeader:     getBoolFromMap(ingMap, "is_header"),
+								NoAmount:     getBoolFromMap(ingMap, "no_amount"),
 								OriginalText: getStringFromMap(ingMap, "original_text"),
 								// TODO: implement Food, Unit, Conversions, UsedInRecipes
-								Food: nil,
-								Unit: nil,
-								Conversions: []interface{}{},
-								UsedInRecipes: []interface{}{},
+								Food:                nil,
+								Unit:                nil,
+								Conversions:         []interface{}{},
+								UsedInRecipes:       []interface{}{},
 								AlwaysUsePluralUnit: false,
 								AlwaysUsePluralFood: false,
 							}

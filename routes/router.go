@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"godoor/config"
 	"godoor/middleware"
 	"net/http"
 
@@ -27,6 +28,9 @@ func SetupRouter() *gin.Engine {
 
 		c.Next()
 	})
+
+	// Static files
+	r.Static(config.MediaURL, config.MediaRoot)
 
 	// Authentication routes (no auth required)
 	r.POST("/api-token-auth/", AuthenticateUser)

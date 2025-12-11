@@ -1,12 +1,14 @@
 package main
 
 import (
-	"log"
-	"os"
-	"time"
 	"godoor/config"
 	"godoor/models"
 	"godoor/routes"
+	"godoor/utils"
+	"log"
+	"os"
+	"time"
+
 	"github.com/joho/godotenv"
 )
 
@@ -152,6 +154,11 @@ func main() {
 
 	// Initialize database with default data
 	initializeDatabase()
+
+	// Ensure recipe images directory exists
+	if err := utils.EnsureRecipeImagesDir(); err != nil {
+		log.Printf("Failed to create recipe images directory: %v", err)
+	}
 
 	// Setup routes
 	r := routes.SetupRouter()

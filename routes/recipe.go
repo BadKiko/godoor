@@ -2,19 +2,19 @@ package routes
 
 import (
 	"fmt"
-	"mime/multipart"
+	"godoor/models"
+	"godoor/serializers"
+	"godoor/utils"
 	"net/http"
 	"strconv"
 	"strings"
-	"godoor/models"
-	"godoor/serializers"
+
 	"github.com/gin-gonic/gin"
 )
 
 // GetRecipes returns list of recipes with sorting and pagination
 func GetRecipes(c *gin.Context) {
 	space := c.MustGet("space").(*models.Space)
-
 
 	// Parse query parameters
 	sortOrder := c.Query("sort_order")
@@ -126,7 +126,6 @@ func CreateRecipe(c *gin.Context) {
 		return
 	}
 
-
 	// Debug logging
 	fmt.Printf("DEBUG: Recipe name: %s, Steps count: %d\n", req.Name, len(req.Steps))
 
@@ -174,11 +173,11 @@ func CreateRecipe(c *gin.Context) {
 
 // UpdateRecipeRequest represents recipe update request
 type UpdateRecipeRequest struct {
-	Name        *string                   `json:"name,omitempty"`
-	Description *string                   `json:"description,omitempty"`
-	Servings    *int                      `json:"servings,omitempty"`
-	Steps       []map[string]interface{}  `json:"steps,omitempty"`       // TODO: implement proper step handling
-	Properties  []map[string]interface{}  `json:"properties,omitempty"`  // TODO: implement proper property handling
+	Name        *string                  `json:"name,omitempty"`
+	Description *string                  `json:"description,omitempty"`
+	Servings    *int                     `json:"servings,omitempty"`
+	Steps       []map[string]interface{} `json:"steps,omitempty"`      // TODO: implement proper step handling
+	Properties  []map[string]interface{} `json:"properties,omitempty"` // TODO: implement proper property handling
 }
 
 // StepUpdate represents a step in update request
@@ -263,19 +262,19 @@ func UpdateRecipe(c *gin.Context) {
 
 			// Create response step data with real ID
 			responseSteps[i] = map[string]interface{}{
-				"id":                   step.ID,
-				"name":                 step.Name,
-				"instruction":          step.Instruction,
-				"time":                 step.Time,
-				"order":                step.Order,
-				"show_as_header":       step.ShowAsHeader,
+				"id":                     step.ID,
+				"name":                   step.Name,
+				"instruction":            step.Instruction,
+				"time":                   step.Time,
+				"order":                  step.Order,
+				"show_as_header":         step.ShowAsHeader,
 				"show_ingredients_table": step.ShowIngredientsTable,
-				"ingredients":          []interface{}{}, // TODO: implement ingredients
-				"instructions_markdown": step.Instruction, // TODO: implement markdown
-				"file":                 nil,
-				"step_recipe":          nil,
-				"step_recipe_data":     nil,
-				"numrecipe":           0,
+				"ingredients":            []interface{}{},  // TODO: implement ingredients
+				"instructions_markdown":  step.Instruction, // TODO: implement markdown
+				"file":                   nil,
+				"step_recipe":            nil,
+				"step_recipe_data":       nil,
+				"numrecipe":              0,
 			}
 		}
 	} else {
@@ -285,19 +284,19 @@ func UpdateRecipe(c *gin.Context) {
 			responseSteps = make([]map[string]interface{}, len(existingSteps))
 			for i, step := range existingSteps {
 				responseSteps[i] = map[string]interface{}{
-					"id":                   step.ID,
-					"name":                 step.Name,
-					"instruction":          step.Instruction,
-					"time":                 step.Time,
-					"order":                step.Order,
-					"show_as_header":       step.ShowAsHeader,
+					"id":                     step.ID,
+					"name":                   step.Name,
+					"instruction":            step.Instruction,
+					"time":                   step.Time,
+					"order":                  step.Order,
+					"show_as_header":         step.ShowAsHeader,
 					"show_ingredients_table": step.ShowIngredientsTable,
-					"ingredients":          []interface{}{}, // TODO: implement ingredients
-					"instructions_markdown": step.Instruction, // TODO: implement markdown
-					"file":                 nil,
-					"step_recipe":          nil,
-					"step_recipe_data":     nil,
-					"numrecipe":           0,
+					"ingredients":            []interface{}{},  // TODO: implement ingredients
+					"instructions_markdown":  step.Instruction, // TODO: implement markdown
+					"file":                   nil,
+					"step_recipe":            nil,
+					"step_recipe_data":       nil,
+					"numrecipe":              0,
 				}
 			}
 		} else {
@@ -313,30 +312,30 @@ func UpdateRecipe(c *gin.Context) {
 
 	// Create response manually with proper steps
 	response := map[string]interface{}{
-		"id":                    recipe.ID,
-		"name":                  recipe.Name,
-		"description":           recipe.Description,
-		"image":                 nil,
-		"keywords":              []interface{}{},
-		"steps":                 responseSteps,
-		"working_time":          recipe.WorkingTime,
-		"waiting_time":          recipe.WaitingTime,
-		"created_by":            serializers.SerializeUser(&recipe.CreatedBy),
-		"created_at":            recipe.CreatedAt,
-		"updated_at":            recipe.UpdatedAt,
-		"source_url":            "",
-		"internal":              recipe.Internal,
+		"id":                       recipe.ID,
+		"name":                     recipe.Name,
+		"description":              recipe.Description,
+		"image":                    recipe.Image,
+		"keywords":                 []interface{}{},
+		"steps":                    responseSteps,
+		"working_time":             recipe.WorkingTime,
+		"waiting_time":             recipe.WaitingTime,
+		"created_by":               serializers.SerializeUser(&recipe.CreatedBy),
+		"created_at":               recipe.CreatedAt,
+		"updated_at":               recipe.UpdatedAt,
+		"source_url":               "",
+		"internal":                 recipe.Internal,
 		"show_ingredient_overview": true,
-		"nutrition":             nil,
-		"properties":            []interface{}{},
-		"food_properties":       map[string]interface{}{},
-		"servings":              recipe.Servings,
-		"file_path":             "",
-		"servings_text":         recipe.ServingsText,
-		"rating":                recipe.Rating,
-		"last_cooked":           nil,
-		"private":               recipe.Private,
-		"shared":                []interface{}{},
+		"nutrition":                nil,
+		"properties":               []interface{}{},
+		"food_properties":          map[string]interface{}{},
+		"servings":                 recipe.Servings,
+		"file_path":                "",
+		"servings_text":            recipe.ServingsText,
+		"rating":                   recipe.Rating,
+		"last_cooked":              nil,
+		"private":                  recipe.Private,
+		"shared":                   []interface{}{},
 	}
 
 	c.JSON(http.StatusOK, response)
@@ -452,9 +451,13 @@ func RecipeImage(c *gin.Context) {
 	imageURL := c.PostForm("image_url")
 
 	if imageURL != "" && validateImageURL(imageURL) {
+		// Delete old image file if exists before setting URL
+		if recipe.Image != nil {
+			utils.DeleteImageFile(*recipe.Image)
+		}
 		recipe.Image = &imageURL
 	} else {
-		// Check for uploaded file with any field name
+		// Check for uploaded file
 		file, header, err := c.Request.FormFile("image")
 		if err != nil {
 			// Try other common field names
@@ -470,36 +473,27 @@ func RecipeImage(c *gin.Context) {
 				}
 			}
 		}
-		// If still not found, try to get any file from multipart form
-		if err != nil {
-			form, formErr := c.MultipartForm()
-			if formErr == nil && form != nil && len(form.File) > 0 {
-				// Take first file from any field
-				for field, files := range form.File {
-					if len(files) > 0 {
-						fmt.Printf("DEBUG RecipeImage: Found file in multipart field '%s': %s\n", field, files[0].Filename)
-						file, err = files[0].Open()
-						if err == nil {
-							// Create a fake header since we opened the file differently
-							header = &multipart.FileHeader{
-								Filename: files[0].Filename,
-								Header:   files[0].Header,
-								Size:     files[0].Size,
-							}
-							break
-						}
-					}
-				}
-			}
-		}
 
 		if err == nil && header != nil {
-			// File uploaded
-			filename := header.Filename
-			recipe.Image = &filename
+			// Delete old image file if exists before saving new one
+			if recipe.Image != nil {
+				utils.DeleteImageFile(*recipe.Image)
+			}
+
+			// Save uploaded file to disk
+			imagePath, saveErr := utils.SaveUploadedImage(file, header, recipe.ID)
+			if saveErr != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": saveErr.Error()})
+				return
+			}
+			recipe.Image = &imagePath
 			file.Close()
 		} else {
 			// No image provided - remove current image
+			if recipe.Image != nil {
+				// Delete old image file from disk
+				utils.DeleteImageFile(*recipe.Image)
+			}
 			recipe.Image = nil
 		}
 	}

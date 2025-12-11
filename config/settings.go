@@ -6,17 +6,23 @@ import "os"
 var (
 	// Basic settings
 	ShoppingMinAutosyncInterval = getEnvInt("SHOPPING_MIN_AUTOSYNC_INTERVAL", 5)
-	EnablePDFExport            = getEnvBool("ENABLE_PDF_EXPORT", false)
-	DisableExternalConnectors  = getEnvBool("DISABLE_EXTERNAL_CONNECTORS", false)
-	TermsURL                   = getEnvString("TERMS_URL", "")
-	PrivacyURL                 = getEnvString("PRIVACY_URL", "")
-	ImprintURL                 = getEnvString("IMPRINT_URL", "")
-	Hosted                     = getEnvBool("HOSTED", false)
-	Debug                      = getEnvBool("DEBUG", true) // Default true for development
+	EnablePDFExport             = getEnvBool("ENABLE_PDF_EXPORT", false)
+	DisableExternalConnectors   = getEnvBool("DISABLE_EXTERNAL_CONNECTORS", false)
+	TermsURL                    = getEnvString("TERMS_URL", "")
+	PrivacyURL                  = getEnvString("PRIVACY_URL", "")
+	ImprintURL                  = getEnvString("IMPRINT_URL", "")
+	Hosted                      = getEnvBool("HOSTED", false)
+	Debug                       = getEnvBool("DEBUG", true) // Default true for development
+
+	// Media settings
+	MediaRoot       = getEnvString("MEDIA_ROOT", "./media")
+	MediaURL        = getEnvString("MEDIA_URL", "/media/")
+	RecipeImagesDir = getEnvString("RECIPE_IMAGES_DIR", "recipes")
+	MaxImageSize    = getEnvInt("MAX_IMAGE_SIZE_MB", 10) // Maximum image size in MB
 
 	// Theme settings
 	UnauthenticatedThemeFromSpace = getEnvInt("UNAUTHENTICATED_THEME_FROM_SPACE", 0)
-	ForceThemeFromSpace          = getEnvInt("FORCE_THEME_FROM_SPACE", 0)
+	ForceThemeFromSpace           = getEnvInt("FORCE_THEME_FROM_SPACE", 0)
 
 	// Version info (simplified)
 	TandoorVersion = "2.3.6" // Tandoor version
