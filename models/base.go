@@ -36,6 +36,9 @@ func AutoMigrate() {
 		&Property{},
 		&PropertyType{},
 		&CookLog{},
+		&ShoppingListRecipe{},
+		&ShoppingList{},
+		&ShoppingListEntry{},
 	)
 	if err != nil {
 		panic("Failed to migrate database: " + err.Error())

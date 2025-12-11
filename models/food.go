@@ -14,6 +14,9 @@ type Food struct {
 	SpaceID uint  `json:"-" gorm:"not null"`
 	Space   Space `json:"-" gorm:"foreignKey:SpaceID;references:ID"`
 
+	// Many-to-many with shopping lists
+	ShoppingLists []ShoppingList `json:"-" gorm:"many2many:shopping_list_entry_lists;"`
+
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }

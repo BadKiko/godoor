@@ -8,28 +8,35 @@ func stringPtr(s string) *string {
 // Space model matching Tandoor structure
 type Space struct {
 	BaseModel
-	Name        string    `json:"name" gorm:"default:'Default'"`
-	CreatedByID uint      `json:"-" gorm:"column:created_by_id"`
-	CreatedBy   User      `json:"created_by,omitempty" gorm:"foreignKey:CreatedByID;references:ID"`
-	Message     string    `json:"message" gorm:"default:''"`
+	Name        string `json:"name" gorm:"default:'Default'"`
+	CreatedByID uint   `json:"-" gorm:"column:created_by_id"`
+	CreatedBy   User   `json:"created_by,omitempty" gorm:"foreignKey:CreatedByID;references:ID"`
+	Message     string `json:"message" gorm:"default:''"`
 }
 
 // UserSpace represents the relationship between users and spaces
 type UserSpace struct {
 	BaseModel
-	UserID      uint      `json:"-" gorm:"not null"`
-	User        User      `json:"user" gorm:"foreignKey:UserID;references:ID"`
-	SpaceID     uint      `json:"-" gorm:"not null"`
-	Space       Space     `json:"space" gorm:"foreignKey:SpaceID;references:ID"`
-	Active      bool      `json:"active" gorm:"default:false"`
-	InternalNote *string  `json:"internal_note"`
+	UserID       uint    `json:"-" gorm:"not null"`
+	User         User    `json:"user" gorm:"foreignKey:UserID;references:ID"`
+	SpaceID      uint    `json:"-" gorm:"not null"`
+	Space        Space   `json:"space" gorm:"foreignKey:SpaceID;references:ID"`
+	Active       bool    `json:"active" gorm:"default:false"`
+	InternalNote *string `json:"internal_note"`
 }
 
 // GetActiveSpace returns the active space for a user
 func (u *User) GetActiveSpace() *Space {
 	var userSpace UserSpace
-	if err := DB.Where("user_id = ? AND active = ?", u.ID, true).Preload("Space").First(&userSpace).Error; err != nil {
+	if err := DB.Where("user_id = ? AND active = 1", u.ID).Preload("Space").First(&userSpace).Error; err != nil {
 		return nil
+	}
+	// Debug: check if space is loaded
+	if userSpace.Space.ID == 0 {
+		// Try to load space manually
+		if err := DB.First(&userSpace.Space, userSpace.SpaceID).Error; err != nil {
+			return nil
+		}
 	}
 	return &userSpace.Space
 }

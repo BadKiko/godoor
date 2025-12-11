@@ -179,6 +179,15 @@ func SetupRouter() *gin.Engine {
 		protected.DELETE("/recipe/:id/", DeleteRecipe)
 		protected.PUT("/recipe/:id/shopping/", RecipeShopping)
 		protected.PUT("/recipe/:id/image/", RecipeImage)
+
+		// Shopping list routes
+		protected.GET("/shopping-list-entry/", GetShoppingListEntries)
+		protected.POST("/shopping-list-entry/", CreateShoppingListEntry)
+		protected.GET("/shopping-list-entry/:id/", GetShoppingListEntry)
+		protected.PUT("/shopping-list-entry/:id/", UpdateShoppingListEntry)
+		protected.PATCH("/shopping-list-entry/:id/", UpdateShoppingListEntry)
+		protected.DELETE("/shopping-list-entry/:id/", DeleteShoppingListEntry)
+		protected.POST("/shopping-list-entry/bulk/", BulkUpdateShoppingListEntries)
 	}
 
 	return r

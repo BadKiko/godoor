@@ -70,3 +70,38 @@ func SerializeFoods(foods []models.Food, totalCount int) FoodListResponse {
 		Timestamp: time.Now().Format(time.RFC3339),
 	}
 }
+
+// FoodShoppingSerializer matching Tandoor FoodShoppingSerializer
+type FoodShoppingSerializer struct {
+	ID                  uint                     `json:"id"`
+	Name                string                   `json:"name"`
+	PluralName          string                   `json:"plural_name"`
+	Description         string                   `json:"description"`
+	FullName            string                   `json:"full_name"`
+	SupermarketCategory interface{}              `json:"supermarket_category"` // TODO: implement
+	ShoppingLists       []ShoppingListSerializer `json:"shopping_lists"`
+}
+
+// SerializeFoodShopping converts Food model to shopping serializer
+func SerializeFoodShopping(food *models.Food) FoodShoppingSerializer {
+	// TODO: Load shopping lists for food
+	shoppingLists := []ShoppingListSerializer{} // TODO: implement
+
+	pluralName := ""
+	if food.PluralName != nil {
+		pluralName = *food.PluralName
+	}
+
+	// full_name is just the name for now (TODO: implement hierarchy)
+	fullName := food.Name
+
+	return FoodShoppingSerializer{
+		ID:                  food.ID,
+		Name:                food.Name,
+		PluralName:          pluralName,
+		Description:         food.Description,
+		FullName:            fullName,
+		SupermarketCategory: nil, // TODO: implement supermarket categories
+		ShoppingLists:       shoppingLists,
+	}
+}

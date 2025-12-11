@@ -1,10 +1,11 @@
 package middleware
 
 import (
+	"godoor/models"
 	"net/http"
 	"strings"
 	"time"
-	"godoor/models"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -56,7 +57,7 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		// Get active space for user
 		activeSpace := user.GetActiveSpace()
-		if activeSpace == nil {
+		if activeSpace == nil || activeSpace.ID == 0 {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "No active space found"})
 			c.Abort()
 			return
