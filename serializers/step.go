@@ -3,6 +3,7 @@ package serializers
 import (
 	"godoor/models"
 	"time"
+
 	"github.com/gomarkdown/markdown"
 )
 
@@ -30,11 +31,17 @@ func SerializeStep(step *models.Step) StepFullSerializer {
 	htmlBytes := markdown.ToHTML(markdownBytes, nil, nil)
 	instructionsHTML := string(htmlBytes)
 
+	// Serialize ingredients
+	ingredients := make([]IngredientSerializer, len(step.Ingredients))
+	for i, ingredient := range step.Ingredients {
+		ingredients[i] = SerializeIngredient(&ingredient)
+	}
+
 	return StepFullSerializer{
 		ID:                   step.ID,
 		Name:                 step.Name,
 		Instruction:          step.Instruction,
-		Ingredients:          []IngredientSerializer{}, // TODO: implement ingredients
+		Ingredients:          ingredients,
 		InstructionsMarkdown: instructionsHTML,
 		Time:                 step.Time,
 		Order:                step.Order,
@@ -43,7 +50,7 @@ func SerializeStep(step *models.Step) StepFullSerializer {
 		File:                 nil, // TODO: implement file
 		StepRecipe:           nil, // TODO: implement step recipe
 		StepRecipeData:       nil, // TODO: implement step recipe data
-		NumRecipe:            0,  // TODO: implement num recipe
+		NumRecipe:            0,   // TODO: implement num recipe
 	}
 }
 

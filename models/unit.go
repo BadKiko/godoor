@@ -4,10 +4,10 @@ import (
 	"time"
 )
 
-// Food model matching Tandoor Food (simplified)
-type Food struct {
+// Unit model matching Tandoor Unit (simplified)
+type Unit struct {
 	BaseModel
-	Name        string  `json:"name" gorm:"not null"`
+	Name        string  `json:"name" gorm:"not null;uniqueIndex:idx_unit_space_name"`
 	PluralName  *string `json:"plural_name"`
 	Description string  `json:"description" gorm:"default:''"`
 
@@ -18,18 +18,18 @@ type Food struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-// CreateFood creates a new food item
-func CreateFood(space *Space, name, description string) (*Food, error) {
-	food := Food{
+// CreateUnit creates a new unit
+func CreateUnit(space *Space, name, description string) (*Unit, error) {
+	unit := Unit{
 		Name:        name,
 		Description: description,
 		SpaceID:     space.ID,
 		Space:       *space,
 	}
 
-	if err := DB.Create(&food).Error; err != nil {
+	if err := DB.Create(&unit).Error; err != nil {
 		return nil, err
 	}
 
-	return &food, nil
+	return &unit, nil
 }

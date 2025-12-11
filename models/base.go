@@ -30,6 +30,8 @@ func AutoMigrate() {
 		&MealType{},
 		&MealPlan{},
 		&Food{},
+		&Unit{},
+		&Ingredient{},
 		&Step{},
 		&Property{},
 		&PropertyType{},

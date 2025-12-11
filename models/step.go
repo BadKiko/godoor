@@ -5,22 +5,25 @@ import "time"
 // Step model matching Tandoor Step
 type Step struct {
 	BaseModel
-	Name                string `json:"name" gorm:"default:''"`
-	Instruction         string `json:"instruction" gorm:"type:text"`
-	Time                int    `json:"time" gorm:"default:0"`
-	Order               int    `json:"order" gorm:"default:0"`
-	ShowAsHeader        bool   `json:"show_as_header" gorm:"default:true"`
-	ShowIngredientsTable bool  `json:"show_ingredients_table" gorm:"default:true"`
+	Name                 string `json:"name" gorm:"default:''"`
+	Instruction          string `json:"instruction" gorm:"type:text"`
+	Time                 int    `json:"time" gorm:"default:0"`
+	Order                int    `json:"order" gorm:"default:0"`
+	ShowAsHeader         bool   `json:"show_as_header" gorm:"default:true"`
+	ShowIngredientsTable bool   `json:"show_ingredients_table" gorm:"default:true"`
 
-	SpaceID uint `json:"-" gorm:"not null"`
+	SpaceID uint  `json:"-" gorm:"not null"`
 	Space   Space `json:"-" gorm:"foreignKey:SpaceID;references:ID"`
 
 	// For permission checking - the primary recipe this step belongs to
-	RecipeID uint `json:"-" gorm:"not null"`
+	RecipeID uint   `json:"-" gorm:"not null"`
 	Recipe   Recipe `json:"recipe" gorm:"foreignKey:RecipeID;references:ID"`
 
 	// Many-to-many with recipes (for step recipes)
 	Recipes []Recipe `json:"-" gorm:"many2many:recipe_steps;"`
+
+	// Many-to-many with ingredients
+	Ingredients []Ingredient `json:"ingredients" gorm:"many2many:step_ingredients;"`
 
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`

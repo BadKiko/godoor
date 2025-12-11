@@ -1,11 +1,12 @@
 package routes
 
 import (
+	"godoor/models"
+	"godoor/serializers"
 	"net/http"
 	"strconv"
 	"strings"
-	"godoor/models"
-	"godoor/serializers"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -67,7 +68,7 @@ func GetSteps(c *gin.Context) {
 
 	// Execute query
 	var steps []models.Step
-	if err := queryBuilder.Preload("Recipe").Find(&steps).Error; err != nil {
+	if err := queryBuilder.Preload("Recipe").Preload("Ingredients").Preload("Ingredients.Food").Preload("Ingredients.Unit").Find(&steps).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch steps"})
 		return
 	}
@@ -88,7 +89,7 @@ func GetStep(c *gin.Context) {
 	space := c.MustGet("space").(*models.Space)
 
 	var step models.Step
-	if err := models.DB.Where("space_id = ? AND id = ?", space.ID, uint(id)).Preload("Recipe").First(&step).Error; err != nil {
+	if err := models.DB.Where("space_id = ? AND id = ?", space.ID, uint(id)).Preload("Recipe").Preload("Ingredients").Preload("Ingredients.Food").Preload("Ingredients.Unit").First(&step).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Step not found"})
 		return
 	}

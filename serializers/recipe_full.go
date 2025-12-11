@@ -4,6 +4,7 @@ import (
 	"godoor/config"
 	"godoor/models"
 	"time"
+
 	"github.com/gomarkdown/markdown"
 )
 
@@ -22,19 +23,19 @@ func getRecipeImageURL(imagePath *string) interface{} {
 
 // IngredientSerializer matching Tandoor IngredientSerializer
 type IngredientSerializer struct {
-	ID                  uint          `json:"id"`
-	Food                interface{}   `json:"food"` // FoodSerializer, TODO: implement
-	Unit                interface{}   `json:"unit"` // UnitSerializer, TODO: implement
-	Amount              float64       `json:"amount"`
-	Conversions         []interface{} `json:"conversions"` // TODO: implement conversions
-	Note                string        `json:"note"`
-	Order               int           `json:"order"`
-	IsHeader            bool          `json:"is_header"`
-	NoAmount            bool          `json:"no_amount"`
-	OriginalText        string        `json:"original_text"`
-	UsedInRecipes       []interface{} `json:"used_in_recipes"` // TODO: implement
-	AlwaysUsePluralUnit bool          `json:"always_use_plural_unit"`
-	AlwaysUsePluralFood bool          `json:"always_use_plural_food"`
+	ID                  uint            `json:"id"`
+	Food                *FoodSerializer `json:"food"`
+	Unit                *UnitSerializer `json:"unit"`
+	Amount              float64         `json:"amount"`
+	Conversions         []interface{}   `json:"conversions"` // TODO: implement conversions
+	Note                string          `json:"note"`
+	Order               int             `json:"order"`
+	IsHeader            bool            `json:"is_header"`
+	NoAmount            bool            `json:"no_amount"`
+	OriginalText        string          `json:"original_text"`
+	UsedInRecipes       []interface{}   `json:"used_in_recipes"` // TODO: implement
+	AlwaysUsePluralUnit bool            `json:"always_use_plural_unit"`
+	AlwaysUsePluralFood bool            `json:"always_use_plural_food"`
 }
 
 // StepSerializer matching Tandoor StepSerializer
@@ -95,6 +96,25 @@ type RecipeSerializer struct {
 	LastCooked             *time.Time               `json:"last_cooked,omitempty"`
 	Private                bool                     `json:"private"`
 	Shared                 []interface{}            `json:"shared"` // TODO: implement shared users
+}
+
+// SerializeIngredient converts Ingredient model to serializer
+func SerializeIngredient(ingredient *models.Ingredient) IngredientSerializer {
+	return IngredientSerializer{
+		ID:                  ingredient.ID,
+		Food:                SerializeFood(ingredient.Food),
+		Unit:                SerializeUnit(ingredient.Unit),
+		Amount:              ingredient.Amount,
+		Conversions:         []interface{}{}, // TODO: implement conversions
+		Note:                ingredient.Note,
+		Order:               ingredient.Order,
+		IsHeader:            ingredient.IsHeader,
+		NoAmount:            ingredient.NoAmount,
+		OriginalText:        "",              // TODO: implement original text
+		UsedInRecipes:       []interface{}{}, // TODO: implement used in recipes
+		AlwaysUsePluralUnit: false,           // TODO: implement plural logic
+		AlwaysUsePluralFood: false,           // TODO: implement plural logic
+	}
 }
 
 // SerializeRecipe converts Recipe model to full serializer

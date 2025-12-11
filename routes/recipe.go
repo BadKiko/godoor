@@ -37,7 +37,7 @@ func GetRecipes(c *gin.Context) {
 	}
 
 	// Build query
-	query := models.DB.Where("space_id = ?", space.ID).Preload("CreatedBy").Preload("Steps")
+	query := models.DB.Where("space_id = ?", space.ID).Preload("CreatedBy").Preload("Steps").Preload("Steps.Ingredients").Preload("Steps.Ingredients.Food").Preload("Steps.Ingredients.Unit")
 
 	// Apply sorting
 	if sortOrder != "" {
@@ -93,7 +93,7 @@ func GetRecipe(c *gin.Context) {
 	space := c.MustGet("space").(*models.Space)
 
 	var recipe models.Recipe
-	if err := models.DB.Where("space_id = ? AND id = ?", space.ID, uint(id)).Preload("CreatedBy").Preload("Steps").First(&recipe).Error; err != nil {
+	if err := models.DB.Where("space_id = ? AND id = ?", space.ID, uint(id)).Preload("CreatedBy").Preload("Steps").Preload("Steps.Ingredients").Preload("Steps.Ingredients.Food").Preload("Steps.Ingredients.Unit").First(&recipe).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Recipe not found"})
 		return
 	}
