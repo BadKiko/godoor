@@ -1,7 +1,7 @@
-FROM golang:1.21-alpine AS builder
+FROM golang:1.21 AS builder
 
-# Install git (needed for go mod download)
-RUN apk add --no-cache git
+# Install build dependencies for SQLite
+RUN apt-get update && apt-get install -y gcc sqlite3 libsqlite3-dev git && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /app
@@ -15,13 +15,13 @@ RUN go mod download
 # Copy source code
 COPY . .
 
-# Build the application
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o godoor .
+# Build the application with CGO for SQLite
+RUN CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo -o godoor .
 
-FROM alpine:latest
+FROM debian:bookworm-slim
 
-# Install ca-certificates for HTTPS requests
-RUN apk --no-cache add ca-certificates
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y ca-certificates sqlite3 && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /root/
 

@@ -1,10 +1,11 @@
 package routes
 
 import (
-	"net/http"
-	"strconv"
 	"godoor/models"
 	"godoor/serializers"
+	"net/http"
+	"strconv"
+
 	"github.com/gin-gonic/gin"
 )
 
