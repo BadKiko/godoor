@@ -1,10 +1,11 @@
 package routes
 
 import (
-	"net/http"
-	"strconv"
 	"godoor/models"
 	"godoor/serializers"
+	"net/http"
+	"strconv"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -33,7 +34,7 @@ func GetCookLogs(c *gin.Context) {
 	}
 
 	// Build query
-	query := models.DB.Where("space_id = ?", space.ID).Preload("Recipe").Preload("CreatedBy")
+	query := models.DB.Where("space_id = ?", space.ID).Preload("Recipe").Preload("Recipe.Keywords").Preload("Recipe.CreatedBy").Preload("CreatedBy")
 
 	// Filter by recipe if specified
 	if recipeIDStr != "" {
@@ -73,7 +74,7 @@ func GetCookLog(c *gin.Context) {
 	space := c.MustGet("space").(*models.Space)
 
 	var cookLog models.CookLog
-	if err := models.DB.Where("space_id = ? AND id = ?", space.ID, uint(id)).Preload("Recipe").Preload("CreatedBy").First(&cookLog).Error; err != nil {
+	if err := models.DB.Where("space_id = ? AND id = ?", space.ID, uint(id)).Preload("Recipe").Preload("Recipe.Keywords").Preload("Recipe.CreatedBy").Preload("CreatedBy").First(&cookLog).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Cook log not found"})
 		return
 	}
@@ -109,11 +110,11 @@ func CreateCookLog(c *gin.Context) {
 	}
 
 	cookLog := models.CookLog{
-		RecipeID:   req.RecipeID,
-		Recipe:     recipe,
-		Servings:   req.Servings,
-		Rating:     req.Rating,
-		Comment:    req.Comment,
+		RecipeID:    req.RecipeID,
+		Recipe:      recipe,
+		Servings:    req.Servings,
+		Rating:      req.Rating,
+		Comment:     req.Comment,
 		CreatedByID: user.ID,
 		CreatedBy:   *user,
 		SpaceID:     space.ID,
@@ -125,7 +126,7 @@ func CreateCookLog(c *gin.Context) {
 		return
 	}
 
-	if err := models.DB.Preload("Recipe").Preload("CreatedBy").First(&cookLog, cookLog.ID).Error; err != nil {
+	if err := models.DB.Preload("Recipe").Preload("Recipe.Keywords").Preload("Recipe.CreatedBy").Preload("CreatedBy").First(&cookLog, cookLog.ID).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to reload cook log"})
 		return
 	}
@@ -186,7 +187,7 @@ func UpdateCookLog(c *gin.Context) {
 		return
 	}
 
-	if err := models.DB.Preload("Recipe").Preload("CreatedBy").First(&cookLog, cookLog.ID).Error; err != nil {
+	if err := models.DB.Preload("Recipe").Preload("Recipe.Keywords").Preload("Recipe.CreatedBy").Preload("CreatedBy").First(&cookLog, cookLog.ID).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to reload cook log"})
 		return
 	}

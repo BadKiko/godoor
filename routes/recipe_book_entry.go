@@ -1,29 +1,30 @@
 package routes
 
 import (
-	"net/http"
-	"strconv"
 	"godoor/models"
 	"godoor/serializers"
+	"net/http"
+	"strconv"
+
 	"github.com/gin-gonic/gin"
 )
 
 // RecipeBookEntrySerializer represents the relationship between recipes and books
 type RecipeBookEntrySerializer struct {
-	ID       uint                           `json:"id"`
+	ID       uint                                 `json:"id"`
 	Recipe   serializers.RecipeOverviewSerializer `json:"recipe"`
-	Book     serializers.RecipeBookSerializer    `json:"book"`
-	BookID   uint                           `json:"-"` // For creation
-	RecipeID uint                           `json:"-"` // For creation
+	Book     serializers.RecipeBookSerializer     `json:"book"`
+	BookID   uint                                 `json:"-"` // For creation
+	RecipeID uint                                 `json:"-"` // For creation
 }
 
 // RecipeBookEntryListResponse represents paginated recipe book entry response
 type RecipeBookEntryListResponse struct {
-	Count     int                          `json:"count"`
-	Next      *string                      `json:"next"`
-	Previous  *string                      `json:"previous"`
-	Results   []RecipeBookEntrySerializer  `json:"results"`
-	Timestamp string                       `json:"timestamp"`
+	Count     int                         `json:"count"`
+	Next      *string                     `json:"next"`
+	Previous  *string                     `json:"previous"`
+	Results   []RecipeBookEntrySerializer `json:"results"`
+	Timestamp string                      `json:"timestamp"`
 }
 
 // GetRecipeBookEntries returns list of recipe book entries for current user
@@ -87,7 +88,7 @@ func GetRecipeBookEntries(c *gin.Context) {
 	offset := (page - 1) * pageSize
 	query = query.Offset(offset).Limit(pageSize)
 
-	if err := query.Preload("Recipe").Preload("Book").Find(&bookEntries).Error; err != nil {
+	if err := query.Preload("Recipe").Preload("Recipe.Keywords").Preload("Recipe.CreatedBy").Preload("Book").Find(&bookEntries).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch recipe book entries"})
 		return
 	}

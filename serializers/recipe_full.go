@@ -124,8 +124,11 @@ func SerializeRecipe(recipe *models.Recipe) RecipeSerializer {
 		description = *recipe.Description
 	}
 
-	// TODO: implement proper keywords loading
-	keywords := []KeywordLabelSerializer{}
+	// Load keywords for recipe - they should be preloaded by the query
+	var keywords []KeywordLabelSerializer
+	for _, keyword := range recipe.Keywords {
+		keywords = append(keywords, SerializeKeywordLabel(&keyword))
+	}
 
 	// Serialize steps if loaded
 	steps := make([]StepFullSerializer, len(recipe.Steps))

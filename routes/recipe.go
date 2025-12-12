@@ -10,11 +10,13 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 // GetRecipes returns list of recipes with sorting and pagination
 func GetRecipes(c *gin.Context) {
 	space := c.MustGet("space").(*models.Space)
+	user := c.MustGet("user").(*models.User)
 
 	// Parse query parameters
 	sortOrder := c.Query("sort_order")
@@ -22,6 +24,8 @@ func GetRecipes(c *gin.Context) {
 	pageStr := c.Query("page")
 	searchQuery := c.Query("query")
 	timesCookedStr := c.Query("timescooked")
+	timesCookedGteStr := c.Query("timescooked_gte")
+	timesCookedLteStr := c.Query("timescooked_lte")
 
 	// Parse keywords parameters
 	keywordsOr := c.QueryArray("keywords_or")
@@ -45,8 +49,23 @@ func GetRecipes(c *gin.Context) {
 		}
 	}
 
-	// Build query
-	query := models.DB.Where("space_id = ?", space.ID).Preload("CreatedBy").Preload("Keywords").Preload("Steps").Preload("Steps.Ingredients").Preload("Steps.Ingredients.Food").Preload("Steps.Ingredients.Unit")
+	// Build query with JOINs for better performance
+	query := models.DB.Where("space_id = ?", space.ID).
+		Joins("LEFT JOIN users ON recipes.created_by_id = users.id").
+		Preload("CreatedBy").
+		Preload("Keywords").
+		Preload("Steps", func(db *gorm.DB) *gorm.DB {
+			return db.Order("\"order\" ASC")
+		}).
+		Preload("Steps.Ingredients", func(db *gorm.DB) *gorm.DB {
+			return db.Order("\"order\" ASC")
+		}).
+		Preload("Steps.Ingredients.Food").
+		Preload("Steps.Ingredients.Unit")
+
+	// Add favorite count annotation (count of cook logs for current user)
+	query = query.Joins("LEFT JOIN (SELECT recipe_id, COUNT(*) as favorite_count FROM cook_logs WHERE created_by_id = ? AND space_id = ? GROUP BY recipe_id) cl ON recipes.id = cl.recipe_id", user.ID, space.ID).
+		Select("recipes.*, COALESCE(cl.favorite_count, 0) as favorite_count")
 
 	// Apply filters
 	if searchQuery != "" {
@@ -59,12 +78,25 @@ func GetRecipes(c *gin.Context) {
 		if timesCooked, err := strconv.Atoi(timesCookedStr); err == nil {
 			if timesCooked == 0 {
 				// Recipes never cooked (no cook logs)
-				query = query.Where("id NOT IN (SELECT DISTINCT recipe_id FROM cook_logs WHERE space_id = ?)", space.ID)
+				query = query.Where("favorite_count = 0")
 			} else {
 				// Recipes cooked exactly N times
-				query = query.Joins("LEFT JOIN (SELECT recipe_id, COUNT(*) as cook_count FROM cook_logs WHERE space_id = ? GROUP BY recipe_id) cl ON recipes.id = cl.recipe_id", space.ID).
-					Where("COALESCE(cl.cook_count, 0) = ?", timesCooked)
+				query = query.Where("favorite_count = ?", timesCooked)
 			}
+		}
+	}
+
+	if timesCookedGteStr != "" {
+		if timesCookedGte, err := strconv.Atoi(timesCookedGteStr); err == nil {
+			// Recipes cooked N times or more
+			query = query.Where("favorite_count >= ?", timesCookedGte)
+		}
+	}
+
+	if timesCookedLteStr != "" {
+		if timesCookedLte, err := strconv.Atoi(timesCookedLteStr); err == nil {
+			// Recipes cooked N times or less (but not 0, as per Tandoor logic)
+			query = query.Where("favorite_count <= ? AND favorite_count > 0", timesCookedLte)
 		}
 	}
 
@@ -97,12 +129,6 @@ func GetRecipes(c *gin.Context) {
 		query = query.Where("recipes.id NOT IN (SELECT DISTINCT recipe_id FROM recipe_keywords WHERE keyword_id IN (?))", keywordsAndNot)
 	}
 
-	if sortOrder == "-favorite" {
-		// TODO: Implement favorite filtering (requires user favorite recipes table)
-		// For now, just sort by created_at
-		query = query.Order("created_at DESC")
-	}
-
 	// Apply sorting
 	if sortOrder != "" {
 		switch sortOrder {
@@ -119,6 +145,12 @@ func GetRecipes(c *gin.Context) {
 			query = query.Order("created_at DESC")
 		case "created_at":
 			query = query.Order("created_at ASC")
+		case "-favorite":
+			// Sort by favorite count descending (most cooked first)
+			query = query.Order("favorite_count DESC, created_at DESC")
+		case "favorite":
+			// Sort by favorite count ascending (least cooked first)
+			query = query.Order("favorite_count ASC, created_at DESC")
 		default:
 			query = query.Order("created_at DESC") // Default sort
 		}
@@ -157,7 +189,19 @@ func GetRecipe(c *gin.Context) {
 	space := c.MustGet("space").(*models.Space)
 
 	var recipe models.Recipe
-	if err := models.DB.Where("space_id = ? AND id = ?", space.ID, uint(id)).Preload("CreatedBy").Preload("Steps").Preload("Steps.Ingredients").Preload("Steps.Ingredients.Food").Preload("Steps.Ingredients.Unit").First(&recipe).Error; err != nil {
+	if err := models.DB.Where("space_id = ? AND id = ?", space.ID, uint(id)).
+		Joins("LEFT JOIN users ON recipes.created_by_id = users.id").
+		Preload("CreatedBy").
+		Preload("Keywords").
+		Preload("Steps", func(db *gorm.DB) *gorm.DB {
+			return db.Order("\"order\" ASC")
+		}).
+		Preload("Steps.Ingredients", func(db *gorm.DB) *gorm.DB {
+			return db.Order("\"order\" ASC")
+		}).
+		Preload("Steps.Ingredients.Food").
+		Preload("Steps.Ingredients.Unit").
+		First(&recipe).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Recipe not found"})
 		return
 	}

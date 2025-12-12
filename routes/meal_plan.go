@@ -79,7 +79,7 @@ func GetMealPlans(c *gin.Context) {
 		}
 	}
 
-	if err := query.Preload("MealType").Preload("Recipe").Preload("CreatedBy").Find(&mealPlans).Error; err != nil {
+	if err := query.Preload("MealType").Preload("Recipe").Preload("Recipe.Keywords").Preload("Recipe.CreatedBy").Preload("CreatedBy").Find(&mealPlans).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch meal plans"})
 		return
 	}
@@ -110,7 +110,7 @@ func GetMealPlan(c *gin.Context) {
 
 	var mealPlan models.MealPlan
 	if err := models.DB.Where("space_id = ? AND id = ?", space.ID, uint(id)).
-		Preload("MealType").Preload("Recipe").Preload("CreatedBy").First(&mealPlan).Error; err != nil {
+		Preload("MealType").Preload("Recipe").Preload("Recipe.Keywords").Preload("Recipe.CreatedBy").Preload("CreatedBy").First(&mealPlan).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Meal plan not found"})
 		return
 	}
@@ -194,7 +194,7 @@ func CreateMealPlan(c *gin.Context) {
 		return
 	}
 
-	if err := models.DB.Preload("MealType").Preload("Recipe").Preload("CreatedBy").First(mealPlan, mealPlan.ID).Error; err != nil {
+	if err := models.DB.Preload("MealType").Preload("Recipe").Preload("Recipe.Keywords").Preload("Recipe.CreatedBy").Preload("CreatedBy").First(mealPlan, mealPlan.ID).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to reload meal plan"})
 		return
 	}
