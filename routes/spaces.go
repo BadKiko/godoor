@@ -137,9 +137,11 @@ func UpdateSpace(c *gin.Context) {
 // GetCurrentSpace returns the current active space
 func GetCurrentSpace(c *gin.Context) {
 	space := c.MustGet("space").(*models.Space)
+	user := c.MustGet("user").(*models.User)
 
 	response := serializers.SerializeSpace(space)
-	// TODO: add created_by if needed
+	createdBy := serializers.SerializeUser(user)
+	response.CreatedBy = &createdBy
 
 	c.JSON(http.StatusOK, response)
 }

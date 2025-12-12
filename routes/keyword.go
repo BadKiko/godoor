@@ -9,17 +9,48 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// GetKeywords returns list of keywords for current user
+// GetKeywords returns list of keywords for current user with pagination
 func GetKeywords(c *gin.Context) {
 	space := c.MustGet("space").(*models.Space)
 
+	// Parse pagination parameters
+	pageSizeStr := c.Query("page_size")
+	pageStr := c.Query("page")
+
+	// Default values
+	pageSize := 50 // Reasonable default for keywords
+	if pageSizeStr != "" {
+		if ps, err := strconv.Atoi(pageSizeStr); err == nil && ps > 0 && ps <= 500 {
+			pageSize = ps
+		}
+	}
+
+	page := 1
+	if pageStr != "" {
+		if p, err := strconv.Atoi(pageStr); err == nil && p > 0 {
+			page = p
+		}
+	}
+
+	// Get total count
+	var totalCount int64
+	if err := models.DB.Model(&models.Keyword{}).Where("space_id = ?", space.ID).Count(&totalCount).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to count keywords"})
+		return
+	}
+
+	// Apply pagination
+	offset := (page - 1) * pageSize
+	query := models.DB.Where("space_id = ?", space.ID).Order("name ASC").Offset(offset).Limit(pageSize)
+
 	var keywords []models.Keyword
-	if err := models.DB.Where("space_id = ?", space.ID).Find(&keywords).Error; err != nil {
+	if err := query.Find(&keywords).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch keywords"})
 		return
 	}
 
-	response := serializers.SerializeKeywords(keywords)
+	// Create paginated response
+	response := serializers.SerializeKeywordsPaginated(keywords, int(totalCount), page, pageSize)
 	c.JSON(http.StatusOK, response)
 }
 

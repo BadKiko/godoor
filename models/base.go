@@ -64,14 +64,20 @@ func AutoMigrate() {
 		"CREATE INDEX IF NOT EXISTS idx_recipes_space_created_at ON recipes(space_id, created_at)",
 		"CREATE INDEX IF NOT EXISTS idx_recipes_space_name ON recipes(space_id, name)",
 		"CREATE INDEX IF NOT EXISTS idx_recipes_space_rating ON recipes(space_id, rating)",
+		"CREATE INDEX IF NOT EXISTS idx_recipes_name ON recipes(name)",
+		"CREATE INDEX IF NOT EXISTS idx_recipes_description ON recipes(description)",
+		"CREATE INDEX IF NOT EXISTS idx_recipes_space_updated_at ON recipes(space_id, updated_at)",
 
 		// Keywords indexes
 		"CREATE INDEX IF NOT EXISTS idx_keywords_space_id ON keywords(space_id)",
 		"CREATE INDEX IF NOT EXISTS idx_keywords_space_name ON keywords(space_id, name)",
+		"CREATE INDEX IF NOT EXISTS idx_keywords_id ON keywords(id)",
+		"CREATE INDEX IF NOT EXISTS idx_keywords_name ON keywords(name)",
 
-		// Recipe-Keywords junction table indexes
+		// Recipe-Keywords junction table indexes (critical for filtering)
 		"CREATE INDEX IF NOT EXISTS idx_recipe_keywords_recipe_id ON recipe_keywords(recipe_id)",
 		"CREATE INDEX IF NOT EXISTS idx_recipe_keywords_keyword_id ON recipe_keywords(keyword_id)",
+		"CREATE INDEX IF NOT EXISTS idx_recipe_keywords_both ON recipe_keywords(recipe_id, keyword_id)",
 
 		// Steps indexes
 		"CREATE INDEX IF NOT EXISTS idx_steps_recipe_id ON steps(recipe_id)",
@@ -94,11 +100,13 @@ func AutoMigrate() {
 		"CREATE INDEX IF NOT EXISTS idx_units_space_id ON units(space_id)",
 		"CREATE INDEX IF NOT EXISTS idx_units_space_name ON units(space_id, name)",
 
-		// Cook logs indexes
+		// Cook logs indexes (critical for favorite count performance)
 		"CREATE INDEX IF NOT EXISTS idx_cook_logs_space_id ON cook_logs(space_id)",
 		"CREATE INDEX IF NOT EXISTS idx_cook_logs_recipe_id ON cook_logs(recipe_id)",
 		"CREATE INDEX IF NOT EXISTS idx_cook_logs_space_recipe ON cook_logs(space_id, recipe_id)",
 		"CREATE INDEX IF NOT EXISTS idx_cook_logs_created_by_id ON cook_logs(created_by_id)",
+		"CREATE INDEX IF NOT EXISTS idx_cook_logs_recipe_created_by ON cook_logs(recipe_id, created_by_id)",
+		"CREATE INDEX IF NOT EXISTS idx_cook_logs_space_created_by ON cook_logs(space_id, created_by_id)",
 
 		// Meal plans indexes
 		"CREATE INDEX IF NOT EXISTS idx_meal_plans_space_id ON meal_plans(space_id)",
@@ -122,10 +130,17 @@ func AutoMigrate() {
 
 		// Spaces indexes
 		"CREATE INDEX IF NOT EXISTS idx_spaces_created_by_id ON spaces(created_by_id)",
+		"CREATE INDEX IF NOT EXISTS idx_spaces_id ON spaces(id)",
 
-		// User spaces indexes
+		// User spaces indexes (critical for space resolution)
 		"CREATE INDEX IF NOT EXISTS idx_user_spaces_user_id ON user_spaces(user_id)",
 		"CREATE INDEX IF NOT EXISTS idx_user_spaces_space_id ON user_spaces(space_id)",
+		"CREATE INDEX IF NOT EXISTS idx_user_spaces_user_active ON user_spaces(user_id, active)",
+		"CREATE INDEX IF NOT EXISTS idx_user_spaces_active ON user_spaces(active)",
+
+		// Users indexes
+		"CREATE INDEX IF NOT EXISTS idx_users_id ON users(id)",
+		"CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)",
 	}
 
 	for _, indexSQL := range indexes {

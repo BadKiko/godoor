@@ -2,6 +2,7 @@ package serializers
 
 import (
 	"godoor/models"
+	"time"
 )
 
 // SpaceSerializer matching Tandoor SpaceSerializer
@@ -9,6 +10,7 @@ type SpaceSerializer struct {
 	ID                   uint          `json:"id"`
 	Name                 string        `json:"name"`
 	CreatedBy            *UserSerializer `json:"created_by,omitempty"`
+	CreatedAt            time.Time     `json:"created_at"`
 	UserCount            int           `json:"user_count"`
 	RecipeCount          int           `json:"recipe_count"`
 	FileSizeMb           float64       `json:"file_size_mb"`
@@ -22,6 +24,7 @@ func SerializeSpace(space *models.Space) SpaceSerializer {
 		ID:                   space.ID,
 		Name:                 space.Name,
 		CreatedBy:            nil, // Will be set if needed
+		CreatedAt:            space.CreatedAt,
 		UserCount:            0,   // TODO: implement counting
 		RecipeCount:          0,   // TODO: implement counting
 		FileSizeMb:           0,   // TODO: implement file size calculation

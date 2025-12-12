@@ -1,6 +1,7 @@
 package serializers
 
 import (
+	"fmt"
 	"godoor/models"
 	"time"
 )
@@ -13,17 +14,17 @@ type KeywordLabelSerializer struct {
 
 // KeywordSerializer matching Tandoor KeywordSerializer
 type KeywordSerializer struct {
-	ID          uint      `json:"id"`
-	Name        string    `json:"name"`
-	Label       string    `json:"label"`
-	Description string    `json:"description"`
+	ID          uint        `json:"id"`
+	Name        string      `json:"name"`
+	Label       string      `json:"label"`
+	Description string      `json:"description"`
 	Image       interface{} `json:"image"`
-	Parent      *uint     `json:"parent"`
-	NumChild    int       `json:"numchild"`
-	NumRecipe   int       `json:"numrecipe"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
-	FullName    string    `json:"full_name"`
+	Parent      *uint       `json:"parent"`
+	NumChild    int         `json:"numchild"`
+	NumRecipe   int         `json:"numrecipe"`
+	CreatedAt   time.Time   `json:"created_at"`
+	UpdatedAt   time.Time   `json:"updated_at"`
+	FullName    string      `json:"full_name"`
 }
 
 // SerializeKeywordLabel converts Keyword to label serializer
@@ -53,14 +54,14 @@ func SerializeKeyword(keyword *models.Keyword) KeywordSerializer {
 
 // KeywordListResponse represents paginated keyword response matching Django REST Framework
 type KeywordListResponse struct {
-	Count     int                `json:"count"`
-	Next      *string            `json:"next"`
-	Previous  *string            `json:"previous"`
+	Count     int                 `json:"count"`
+	Next      *string             `json:"next"`
+	Previous  *string             `json:"previous"`
 	Results   []KeywordSerializer `json:"results"`
-	Timestamp string             `json:"timestamp"`
+	Timestamp string              `json:"timestamp"`
 }
 
-// SerializeKeywords converts slice of Keyword models to paginated response
+// SerializeKeywords converts slice of Keyword models to simple response (for backward compatibility)
 func SerializeKeywords(keywords []models.Keyword) KeywordListResponse {
 	result := make([]KeywordSerializer, len(keywords))
 	for i, keyword := range keywords {
@@ -68,8 +69,40 @@ func SerializeKeywords(keywords []models.Keyword) KeywordListResponse {
 	}
 	return KeywordListResponse{
 		Count:     len(keywords),
-		Next:      nil, // TODO: implement pagination
-		Previous:  nil, // TODO: implement pagination
+		Next:      nil,
+		Previous:  nil,
+		Results:   result,
+		Timestamp: time.Now().Format(time.RFC3339),
+	}
+}
+
+// SerializeKeywordsPaginated converts slice of Keyword models to paginated response
+func SerializeKeywordsPaginated(keywords []models.Keyword, totalCount int, page int, pageSize int) KeywordListResponse {
+	result := make([]KeywordSerializer, len(keywords))
+	for i, keyword := range keywords {
+		result[i] = SerializeKeyword(&keyword)
+	}
+
+	// Calculate pagination URLs
+	var next, previous *string
+
+	// Calculate if there are more pages
+	totalPages := (totalCount + pageSize - 1) / pageSize // Ceiling division
+
+	if page < totalPages {
+		nextURL := fmt.Sprintf("?page=%d&page_size=%d", page+1, pageSize)
+		next = &nextURL
+	}
+
+	if page > 1 {
+		prevURL := fmt.Sprintf("?page=%d&page_size=%d", page-1, pageSize)
+		previous = &prevURL
+	}
+
+	return KeywordListResponse{
+		Count:     totalCount,
+		Next:      next,
+		Previous:  previous,
 		Results:   result,
 		Timestamp: time.Now().Format(time.RFC3339),
 	}
